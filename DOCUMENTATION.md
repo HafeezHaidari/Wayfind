@@ -3,28 +3,34 @@
 ## Current State
 <!-- OVERWRITE this whole section on every update. Do not append. -->
 
-**Stage:** 5 of 8 complete — POI sourcing, travel matrix and ranking (§0d stages 3, 4 and 5).
-**Verified working:** Preflight (§0c): Node v22.14.0, npm 10.9.2; Overpass, OSRM, Wikivoyage,
-Wikidata and Nominatim all reachable; no LLM key set. Trip setup with live geocoding and the
-nine-step interview (§4). The scheduler (§7) as a pure function, with the comprehensive
-opening-hours suite §11b asks for first. Sourcing (§5): one batched Overpass query per city,
-Wikivoyage listing parsing, Wikidata sitelinks, name+proximity matching, dedupe, process-lifetime
-cache (§5e). Travel matrix from OSRM (§5d). Deterministic scoring (§6a) and the full LLM layer
-(§6b) with structural id-validation and keyless fallbacks. `/api/generate` produces a complete
-two-city itinerary. Fixtures recorded for Porto and Lisbon; `FIXTURE_MODE=true` runs the whole
-pipeline offline. 94 tests pass (`npx vitest run`), `npx tsc --noEmit` clean, `npm run build` succeeds.
-**In progress:** Nothing — stage 5 is closed.
-**Next action:** §0d stage 6 — the itinerary UI. Build the proportional time rail (§9a) first, then
-the synced map (§9c). The rail is a functional requirement, not styling (§11c).
-**Blocked / unverified:** No `ANTHROPIC_API_KEY`, so the §6b LLM layer is built and its validation
-and fallbacks are exercised, but no call has been made against a live model. Porto and Lisbon are
-validated against live data; no other city has been. The public OSRM demo server serves car speeds
-on every profile, so walking times are derived from its routed distances rather than routed
-directly (logged below).
-**Active deviations from spec:** Four, all logged: `/api/geocode` built during stage 1; `Poi` carries
-`category`; `CityStay` carries `countryCode`; a stop pinned to a time may sit outside the POI's
-hours (§7c vs §8).
-**Last updated:** Stages 3-5 complete and committed.
+**Stage:** 8 of 8 complete — itinerary UI, refinement loop and export (§0d stages 6, 7 and 8).
+**Verified working:** The whole flow, end to end. Trip setup with live geocoding, the nine-step
+interview (§4), sourcing (§5), ranking (§6a), the LLM layer (§6b) with structural id-validation and
+keyless fallbacks, the scheduler (§7), the proportional time rail (§9a), the synced map (§9c), day
+warnings (§9d), the alternatives panel (§9e), the refinement loop (§8: remove, pin to a day, pin to a
+time, swap in an alternative, more/less of a category, change pace — all re-scheduling against the
+cached candidate set), print (§9f) and the offline static export (§9f).
+111 tests pass (`npx vitest run`), including the full pipeline from fixtures with no network and no
+keys. `npx tsc --noEmit` clean; `npm run build` succeeds.
+Browser-verified with Playwright, since three §11b criteria are facts about rendered layout rather
+than data — `npm run preview` and `npm run verify:export` (both need `npm run dev` running):
+rail blocks measure exactly 3.40 px per minute, so a 120-minute stop renders 4.00× the height of a
+30-minute one; the exported page renders complete with every outbound request aborted (fonts
+embedded, route drawn as SVG, warnings intact, no horizontal overflow); printing produces one day
+per page with the interactive chrome gone and times at 20px.
+**In progress:** Nothing. The build order in §0d is complete.
+**Next action:** Write the README §14 asks for (Missing Inputs at the top, sourcing strategy,
+validated cities, where to tune the scoring weights, known limitations).
+**Blocked / unverified:** No `ANTHROPIC_API_KEY` in the environment, so the §6b LLM layer has never
+run against a live model — its id-validation, schema and fallbacks are exercised, but the three call
+sites are unproven end to end. Porto and Lisbon are validated against live data; no other city has
+been. The public OSRM demo server serves car speeds on every profile, so walking times are derived
+from its routed distances rather than routed directly.
+**Active deviations from spec:** Five, all logged below: `/api/geocode` built during stage 1; `Poi`
+carries `category`; `CityStay` carries `countryCode`; a stop pinned to a time may sit outside the
+POI's hours (§7c vs §8); long slack gaps on the rail are height-capped while stops and meals stay
+exactly proportional.
+**Last updated:** Stages 6-8 complete and committed.
 
 ---
 
@@ -211,3 +217,60 @@ stadium tour or a river cruise has no single OSM tag) and made it the "Do" defau
 for stadium/cruise/tour wording. The duration was already about right; the label was the lie.
 **Rejected:** Inventing an OSM selector for activities — that would generate places rather than find
 them.
+
+### The rail was not proportional until it was measured
+**Context:** §9a's proportional rail was implemented with
+`min-height: calc(var(--block-minutes) * var(--px-per-min) * 1px)` and looked plausible. Measuring
+the rendered boxes in a browser showed it was wrong in the direction that matters: a 30-minute stop
+rendered 149px and a 120-minute stop 126px, because content height dominated the minimum. §11b's
+criterion was failing while the CSS looked like it implemented it.
+**Decision:** `height`, not `min-height`, so duration is the only input; then everything inside a
+stop block sized to fit the shortest block the scale produces — the action row moved out of flow
+(an invisible row was eating a third of a short block), the meta row pinned to the block's foot so
+it can never be the thing that gets clipped, and the rationale clamped to fill what is left. The
+scale was raised to 3.4 px/min, chosen so a 30-minute stop still holds a name, two lines of reason
+and a meta line. Now measured at exactly 3.40 px/min across every block, in the app and in the export.
+**Rejected:** Keeping `min-height` and hoping content stayed short — that is the same bug waiting for
+a longer place name. Clipping the rationale on short stops — §9c gives it real space on purpose.
+
+### Long gaps are the one thing on the rail not drawn to scale
+**Context:** A day with a three-hour hole rendered 620px of empty rail. That is proportional and
+true, and it also tells the reader nothing the label "3 hr 2 min free" does not.
+**Decision:** Slack blocks cap at 9rem and carry a break mark when capped; the label always states
+the real duration. Stops and meals stay exactly proportional, which is what §11b tests and what
+makes the shape of the day honest.
+**Rejected:** Capping stops too — that would undo the whole point. Hiding long gaps — a three-hour
+hole is something the traveller should see.
+
+### The export carries the CSSOM, not a second stylesheet
+**Context:** §9f requires the exported page to render fully offline. It needs the app's styles, and
+a hand-maintained copy would drift from the app within a week.
+**Decision:** Read every rule out of `document.styleSheets` at export time, drop the `@font-face` and
+`@import` rules, and substitute the base64 font faces from `public/fonts/inline.css`. The map becomes
+an inline SVG of the day's route with a scale bar, drawn from coordinates the itinerary already
+carries. Verified by loading the result with every outbound request aborted: 0 requests attempted,
+fonts loaded, route drawn, no overflow.
+**Rejected:** A static map image from a tile provider — a network call at export time and a licence
+question. Omitting the map, which §9f permits — the SVG costs 2 KB and answers "which way do I walk".
+
+### Browser checks live in scripts, not in the test suite
+**Context:** Three §11b criteria — rail proportionality, the offline export, print pagination — are
+facts about rendered layout. They cannot be asserted from the data model, which is exactly how the
+rail bug survived.
+**Decision:** `scripts/preview.ts` and `scripts/verify-export.ts` drive a headless Chromium against a
+running dev server and assert the rendered numbers. They are not in `npm test` because that must
+stay runnable with `FIXTURE_MODE=true` and no server (§11b); they are run by hand at each UI change
+and are documented in the README.
+**Rejected:** jsdom in the unit suite — it does not do layout, so it would have reported the broken
+rail as passing.
+
+### A deterministic reason line, for when the LLM is not there
+**Context:** §6c gives rationale writing to the LLM; §10 turns it off by default; with no key it
+never runs. The itinerary renders correctly with every rationale null, as §6c requires — but a stop
+with no reason at all reads as arbitrary, which is what §9c says the rationale is for.
+**Decision:** `plainWhy` states which of the traveller's own interests the place matched and whether
+Wikivoyage singled it out. Every clause comes from data already on the POI; nothing is generated. An
+LLM rationale replaces it whenever one exists.
+**Rejected:** Leaving the space blank — it makes a considered plan look arbitrary. Writing a
+template sentence with adjectives in it — that is generation with extra steps, and it would be the
+first place a fabricated claim about a place could creep in.

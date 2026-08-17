@@ -34,8 +34,27 @@ export function fixtureSlug(cityName: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * Resolve a city name to the directory that holds its fixture. The recorder is
+ * invoked with an English name ("Lisbon") while the geocoder answers with the
+ * local one ("Lisboa"), so both must find the same recording.
+ */
+export function resolveFixtureSlug(cityName: string): string | null {
+  const direct = fixtureSlug(cityName);
+  if (existsSync(join(FIXTURE_ROOT, direct, "meta.json"))) return direct;
+  if (!existsSync(FIXTURE_ROOT)) return null;
+  for (const entry of readdirSync(FIXTURE_ROOT, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const metaPath = join(FIXTURE_ROOT, entry.name, "meta.json");
+    if (!existsSync(metaPath)) continue;
+    const meta = JSON.parse(readFileSync(metaPath, "utf8")) as CityFixture;
+    if (fixtureSlug(meta.city) === direct) return entry.name;
+  }
+  return null;
+}
+
 export function hasFixture(cityName: string): boolean {
-  return existsSync(join(FIXTURE_ROOT, fixtureSlug(cityName), "meta.json"));
+  return resolveFixtureSlug(cityName) !== null;
 }
 
 export function readMeta(slug: string): CityFixture {
@@ -43,7 +62,7 @@ export function readMeta(slug: string): CityFixture {
 }
 
 export function readFixture<T>(slug: string, file: string): T {
-  const path = join(FIXTURE_ROOT, slug, file);
+  const path = join(FIXTURE_ROOT, resolveFixtureSlug(slug) ?? slug, file);
   if (!existsSync(path)) {
     throw new Error(
       `FIXTURE_MODE is on but fixtures/${slug}/${file} is missing. ` +
@@ -54,7 +73,7 @@ export function readFixture<T>(slug: string, file: string): T {
 }
 
 export function readFixtureText(slug: string, file: string): string {
-  const path = join(FIXTURE_ROOT, slug, file);
+  const path = join(FIXTURE_ROOT, resolveFixtureSlug(slug) ?? slug, file);
   if (!existsSync(path)) {
     throw new Error(
       `FIXTURE_MODE is on but fixtures/${slug}/${file} is missing. ` +
@@ -66,8 +85,8 @@ export function readFixtureText(slug: string, file: string): string {
 
 /** In fixture mode the geocoder answers only for cities we have recorded. */
 export function fixtureGeocode(query: string): GeocodeResult[] {
-  const slug = fixtureSlug(query);
-  if (!hasFixture(query)) {
+  const slug = resolveFixtureSlug(query);
+  if (slug === null) {
     const known = listFixtureCities();
     throw new Error(
       known.length > 0

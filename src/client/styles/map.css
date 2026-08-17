@@ -1,1 +1,130 @@
-/* map — §0d stage 6/9f. */
+/*
+ * §9c — the map is sticky support beside the rail on desktop, and a collapsed
+ * strip on mobile that never eats the itinerary. Leaflet's own chrome is toned
+ * down to the §9b palette so it stops looking like a third-party widget.
+ */
+
+.map-panel {
+  position: sticky;
+  top: var(--space-4);
+  height: min(72vh, 40rem);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--paper-sunk);
+}
+
+.map-panel__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Numbered pins matching the rail's stop order. */
+.map-pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-spine);
+  font-size: 12px;
+  font-weight: 500;
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--hairline-strong);
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.map-pin--base {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--ink);
+  font-size: 14px;
+}
+
+.map-pin--active {
+  background: var(--locked);
+  transform: scale(1.25);
+  z-index: 1000 !important;
+}
+
+.map-route {
+  stroke: var(--ink);
+  stroke-dasharray: 4 4;
+}
+
+/* Leaflet chrome, quietened. */
+.leaflet-container {
+  background: var(--paper-sunk);
+  font-family: var(--font-body);
+}
+
+.leaflet-control-zoom a {
+  color: var(--ink) !important;
+  background: var(--paper-raised) !important;
+  border-color: var(--hairline-strong) !important;
+}
+
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--paper) 82%, transparent) !important;
+  color: var(--ink-soft) !important;
+  font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--ink-soft) !important;
+}
+
+.leaflet-tooltip {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  box-shadow: none;
+}
+
+.leaflet-tooltip::before {
+  border-top-color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* --- Layout: rail primary, map secondary (§9c) ------------------------------ */
+
+.itinerary-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 60fr) minmax(0, 40fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .itinerary-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  /* Mobile: the list is what gets read in a foreign city. The map collapses. */
+  .map-panel {
+    position: static;
+    height: 12rem;
+    order: -1;
+  }
+
+  .map-panel[data-expanded="true"] {
+    height: 70vh;
+  }
+}
+
+.map-toggle {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .map-toggle {
+    display: inline-flex;
+    margin-bottom: var(--space-3);
+  }
+}

@@ -61,15 +61,19 @@
   /*
    * §9a: the rail is proportional. One minute of the day is this many pixels,
    * which is what makes a 120-minute stop visibly taller than a 30-minute one.
+   * Chosen so the shortest stop the scheduler
+   * The value is chosen so the shortest stop the scheduler produces (§7d floors
+   * it at 20 minutes) still has room for a place name, two lines of rationale
+   * and a meta line — measured, not guessed. Raising it makes the day taller,
+   * never less proportional.
    */
-  --px-per-min: 1.05;
-  --stop-min-height: 44px;
+  --px-per-min: 3.4;
 }
 
 @media (max-width: 720px) {
   :root {
     --rail-width: 58px;
     --rail-gutter: 12px;
-    --px-per-min: 0.9;
+    --px-per-min: 3.0;
   }
 }

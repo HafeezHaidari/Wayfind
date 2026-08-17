@@ -68,6 +68,8 @@ export type GenerateRequest = {
   pins: Pin[];
   /** Reuse the candidate set from a previous generation (§8) when true. */
   reuseCandidates: boolean;
+  /** Places the traveller removed; the scheduler will not re-offer them. */
+  removedPoiIds: string[];
 };
 
 export async function generate(req: GenerateRequest): Promise<Itinerary> {

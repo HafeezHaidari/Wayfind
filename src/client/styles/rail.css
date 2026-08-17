@@ -1,1 +1,516 @@
-/* rail — §0d stage 6/9f. */
+/*
+ * §9a — the proportional time rail.
+ *
+ * The load-bearing rule in this file is `height: calc(var(--block-minutes) *
+ * var(--px-per-min) * 1px)`. Every block carries its real duration in
+ * minutes, so a 120-minute museum is four times the height of a 30-minute
+ * viewpoint and the day's shape is legible without reading a number. Everything
+ * else here is kept quiet on purpose: one memorable element, disciplined
+ * surroundings.
+ */
+
+.rail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* The axis itself: one hairline running the whole length of the day. */
+.rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--rail-width) - 1px);
+  width: 1px;
+  background: var(--rail);
+}
+
+.rail-block {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--rail-width) 1fr;
+  column-gap: var(--rail-gutter);
+  /*
+   * This is the point of the whole component, and it has to be `height`, not
+   * `min-height`. With a minimum, a stop's content sets the real height and the
+   * rail silently stops being proportional — measured, a 30-minute stop came
+   * out taller than a 120-minute one. Everything inside a stop block is
+   * therefore sized to fit the shortest block the scale can produce.
+   */
+  height: calc(var(--block-minutes) * var(--px-per-min) * 1px);
+}
+
+.rail-block__spine {
+  position: relative;
+  padding-right: var(--space-3);
+  text-align: right;
+}
+
+.rail-block__time {
+  display: block;
+  font-size: var(--step-1);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  padding-top: 2px;
+}
+
+.rail-block__duration {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+/*
+ * The end time, pinned to the foot of the block. Without it a two-hour block is
+ * just a tall empty box; with it the height is bounded by data at both ends and
+ * reads as a span, the way a printed schedule does.
+ */
+.rail-block__until {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  font-size: var(--step--1);
+  color: var(--rail);
+}
+
+/* Only worth showing when the block is tall enough for the gap to be visible. */
+.rail-block--stop:not(:hover) .rail-block__until {
+  display: block;
+}
+
+.rail-block__why--plain {
+  color: var(--ink-soft);
+}
+
+/* --- Stops ------------------------------------------------------------------ */
+
+.rail-block--stop {
+  padding-bottom: var(--space-2);
+}
+
+/* The block face: a filled panel butted against the axis, signage-flat. */
+.rail-block--stop .rail-block__body {
+  position: relative;
+  height: calc(100% - var(--space-2));
+  overflow: hidden;
+  /*
+   * A column, so the name sits at the top, the meta row is guaranteed its space
+   * at the foot, and the rationale absorbs whatever is left. Without this the
+   * meta row was the first thing clipped on a short block — including the §9d
+   * hours warning, which is the one thing that must never be clipped.
+   */
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem var(--space-4) 0.55rem var(--space-4);
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--ink);
+  border-radius: var(--radius);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+/* The tick where the stop meets the axis. */
+.rail-block--stop .rail-block__spine::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: calc(-1 * var(--rail-gutter) / 2 - 4px);
+  width: 9px;
+  height: 9px;
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+.rail-block--stop[data-hovered] .rail-block__body,
+.rail-block--stop:focus-within .rail-block__body {
+  border-color: var(--ink-soft);
+  background: color-mix(in srgb, var(--ink) 3%, var(--paper-raised));
+}
+
+/* §9b: green means the user locked it and the scheduler must respect it. */
+.rail-block--stop[data-pinned] .rail-block__body {
+  border-left-color: var(--locked);
+  background: var(--locked-wash);
+}
+
+.rail-block--stop[data-pinned] .rail-block__spine::after {
+  background: var(--locked);
+}
+
+/* §9d: a caution hairline on the rail edge, plus a short plain label. */
+.rail-block--stop[data-caution] .rail-block__body {
+  border-left-color: var(--caution);
+}
+
+.rail-block__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.rail-block__name {
+  font-size: var(--step-1);
+  font-variation-settings: "wdth" 110;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+/*
+ * §9c wants the rationale to have real space rather than caption treatment, and
+ * §9a wants the block's height to be the duration. Those pull against each
+ * other on a 30-minute stop, so: two lines always fit, and a longer block shows
+ * up to four.
+ */
+.rail-block__why {
+  margin-top: 0.3rem;
+  margin-bottom: auto;
+  font-size: var(--step-0);
+  line-height: 1.42;
+  color: var(--ink);
+  max-width: 46ch;
+  min-height: 0;
+  flex: 0 1 auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.rail-block__meta {
+  margin-top: 0.3rem;
+  font-size: var(--step--1);
+  line-height: 1.3;
+  color: var(--ink-soft);
+  flex: 0 0 auto;
+}
+
+.rail-block__category {
+  font-family: var(--font-spine);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rail-block__caution {
+  color: var(--caution);
+  font-weight: 500;
+}
+
+/*
+ * Out of flow on purpose: an invisible action row still occupied ~30px of every
+ * block, which is a third of the shortest block's whole height.
+ */
+.rail-block__actions {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-1);
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-left: var(--space-3);
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--paper-raised) 1.5rem,
+    var(--paper-raised)
+  );
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.rail-block--stop[data-pinned] .rail-block__actions {
+  background: linear-gradient(to right, transparent, var(--locked-wash) 1.5rem, var(--locked-wash));
+}
+
+.rail-block--stop[data-hovered] .rail-block__actions,
+.rail-block--stop:focus-within .rail-block__actions {
+  opacity: 1;
+}
+
+/* Touch and keyboard users never hover; never hide an action from them. */
+@media (hover: none) {
+  .rail-block__actions {
+    opacity: 1;
+  }
+}
+
+.tag {
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+}
+
+.tag--locked {
+  color: var(--locked);
+}
+
+/* --- Meals ------------------------------------------------------------------ */
+
+.rail-block--meal {
+  padding-bottom: var(--space-2);
+}
+
+.rail-block--meal .rail-block__body {
+  height: calc(100% - var(--space-2));
+  overflow: hidden;
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius);
+  background: transparent;
+}
+
+.rail-block--meal .rail-block__name {
+  font-size: var(--step-0);
+}
+
+.rail-block--meal .rail-block__spine::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: calc(-1 * var(--rail-gutter) / 2 - 3px);
+  width: 7px;
+  height: 7px;
+  background: var(--paper);
+  border: 1px solid var(--rail);
+  border-radius: 50%;
+}
+
+/* --- Travel and slack: literal gaps in the rail ----------------------------- */
+
+.rail-block--travel,
+.rail-block--slack {
+  align-items: center;
+}
+
+/*
+ * Gaps are the one exception to strict proportionality, and only past a point:
+ * a three-hour hole rendered to scale is 600px of nothing to scroll past, which
+ * tells the reader less than the label already does. Stops and meals stay exact
+ * — that is what makes the shape of the day true — while a long gap is capped
+ * and marked, with its real length still printed in words.
+ */
+.rail-block--slack {
+  max-height: 9rem;
+}
+
+.rail-block--slack[data-capped="true"] .rail-block__spine::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(-1 * var(--rail-gutter) / 2 - 5px);
+  width: 11px;
+  height: 5px;
+  background: var(--paper);
+  border-top: 1px solid var(--rail);
+  border-bottom: 1px solid var(--rail);
+  transform: skewY(-14deg);
+}
+
+.rail-block__travel,
+.rail-block__slack {
+  align-self: center;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  letter-spacing: 0.06em;
+  padding-left: var(--space-1);
+  position: relative;
+}
+
+/* The hairline rule that marks the gap as travelled, not spent. */
+.rail-block__travel::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--rail-gutter) - var(--space-1));
+  top: 50%;
+  width: var(--rail-gutter);
+  height: 1px;
+  background: var(--rail);
+}
+
+.rail-block__slack {
+  color: color-mix(in srgb, var(--ink-soft) 65%, var(--paper));
+  font-style: italic;
+}
+
+/* --- Day furniture ---------------------------------------------------------- */
+
+.day-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: var(--space-5);
+  scrollbar-width: thin;
+}
+
+.day-tab {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  text-align: left;
+  min-width: 7.5rem;
+}
+
+.day-tab__index {
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.day-tab__date {
+  font-family: var(--font-place);
+  font-variation-settings: var(--place-variation);
+  font-weight: 600;
+  font-size: var(--step-0);
+}
+
+.day-tab__count {
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.day-tab[aria-selected="true"] {
+  border-bottom-color: var(--ink);
+}
+
+.day-tab[aria-selected="true"] .day-tab__index,
+.day-tab[aria-selected="true"] .day-tab__count {
+  color: var(--ink);
+}
+
+.day-tab[data-caution="true"] .day-tab__index::after {
+  content: " ●";
+  color: var(--caution);
+}
+
+.day-summary {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* §9d: the day's warnings collected at its foot, plainly. */
+.day-warnings {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--caution);
+  border-radius: var(--radius);
+  background: var(--caution-wash);
+}
+
+.day-warnings__title {
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--caution);
+  margin-bottom: var(--space-2);
+}
+
+.day-warnings ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink);
+  font-size: var(--step-0);
+}
+
+.day-warnings li + li {
+  margin-top: var(--space-1);
+}
+
+/* --- Alternatives (§9e) ----------------------------------------------------- */
+
+.alternatives {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.alternatives__title {
+  font-size: var(--step-1);
+  margin-bottom: var(--space-1);
+}
+
+.alternatives__lede {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  margin-bottom: var(--space-4);
+}
+
+.alternatives__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.alternative {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.alternative__name {
+  font-family: var(--font-place);
+  font-variation-settings: var(--place-variation);
+  font-weight: 600;
+}
+
+.alternative__why {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.alternative__score {
+  font-family: var(--font-spine);
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.rail-empty {
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 720px) {
+  .rail-block__name {
+    font-size: var(--step-0);
+  }
+
+  .rail-block__why {
+    font-size: var(--step--1);
+  }
+}

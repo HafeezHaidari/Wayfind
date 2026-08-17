@@ -39,6 +39,8 @@ export type GenerateRequest = {
   brief: TripBrief;
   pins: Pin[];
   reuseCandidates: boolean;
+  /** Places the traveller took out of the plan (§8). Never re-offered. */
+  removedPoiIds: string[];
 };
 
 /** How much of a boost a semantic match earns. Enough to win its slot, not enough to distort the day. */
@@ -65,6 +67,7 @@ export async function generateItinerary(body: unknown): Promise<Itinerary> {
     const result = await planCity({
       city,
       preferences: applied.preferences,
+      removedPoiIds: new Set(request.removedPoiIds),
       walkCapOverrideM: applied.walkCapOverrideM,
       specialRequests: diff.specialRequests,
       pins: request.pins,
@@ -92,6 +95,7 @@ async function planCity(input: {
   walkCapOverrideM: number | null;
   specialRequests: { descriptor: string; slot: "lunch" | "dinner" | "any"; dayIndex: number | null }[];
   pins: Pin[];
+  removedPoiIds: Set<string>;
   counters: Counters;
 }): Promise<{ itinerary: CityItinerary; pois: Poi[]; notes: string[] }> {
   const { city, preferences, counters } = input;
@@ -128,7 +132,11 @@ async function planCity(input: {
     }
   }
 
-  const pois = ranked.map((c) => c.poi).sort((a, b) => b.score - a.score);
+  // §8: a removed stop stays removed until the traveller says otherwise.
+  const pois = ranked
+    .map((c) => c.poi)
+    .filter((p) => !input.removedPoiIds.has(p.id))
+    .sort((a, b) => b.score - a.score);
 
   // --- §5d: one travel matrix per city per generation ------------------------
   const matrixPoints = matrixPointsFor(pois, city);
@@ -282,5 +290,8 @@ function validateRequest(body: unknown): GenerateRequest {
     } as TripBrief,
     pins: Array.isArray(raw?.pins) ? raw.pins : [],
     reuseCandidates: raw?.reuseCandidates === true,
+    removedPoiIds: Array.isArray(raw?.removedPoiIds)
+      ? raw.removedPoiIds.filter((id): id is string => typeof id === "string")
+      : [],
   };
 }

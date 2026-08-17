@@ -1,1 +1,207 @@
-/* print — §0d stage 6/9f. */
+/*
+ * §9f — print. An itinerary gets printed, and that is a primary use, not an
+ * afterthought: one day per page, times set large, interactive chrome removed,
+ * the rationale kept, the warnings kept.
+ */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* Interactive chrome has no meaning on paper. */
+  .no-print,
+  .masthead,
+  .day-tabs,
+  .map-panel,
+  .map-toggle,
+  .rail-block__actions,
+  .alternatives,
+  .refine,
+  .itinerary-head {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .page,
+  .page--wide {
+    max-width: none;
+    padding: 0;
+  }
+
+  .itinerary-layout {
+    display: block;
+  }
+
+  /*
+   * One day per page. Every day is rendered (the screen shows one at a time;
+   * print gets them all — see PrintableTrip), each starting on a fresh sheet.
+   */
+  .print-day {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-day:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-day__head {
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 3mm;
+    margin-bottom: 5mm;
+  }
+
+  .print-day__city {
+    font-family: var(--font-place);
+    font-size: 20pt;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .print-day__date {
+    font-family: var(--font-spine);
+    font-size: 11pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 1mm;
+  }
+
+  /*
+   * On paper the rail stops being proportional: a scaled two-hour block would
+   * waste half a page, and a reader holding the sheet already has the times.
+   * The spine, the order and the reasoning all carry over; only the scale goes.
+   */
+  .rail-block {
+    height: auto !important;
+    min-height: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    grid-template-columns: 26mm 1fr;
+    column-gap: 5mm;
+  }
+
+  .rail::before {
+    background: #000;
+    left: 26mm;
+  }
+
+  .rail-block--stop .rail-block__body,
+  .rail-block--meal .rail-block__body {
+    height: auto;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    border-left: 1.5pt solid #000;
+    padding: 0 0 4mm 4mm;
+  }
+
+  /* §9f: times set large. They are what a printout is consulted for. */
+  .rail-block__time {
+    font-size: 15pt;
+    font-weight: 500;
+    color: #000;
+  }
+
+  .rail-block__duration,
+  .rail-block__until {
+    font-size: 8.5pt;
+    color: #444;
+  }
+
+  .rail-block__until {
+    position: static;
+    display: none; /* the meta row already prints the full span */
+  }
+
+  .rail-block__name {
+    font-size: 13pt;
+  }
+
+  /* Kept on purpose (§9f). */
+  .rail-block__why {
+    font-size: 10pt;
+    color: #000;
+    -webkit-line-clamp: none;
+    line-clamp: none;
+    display: block;
+    max-width: none;
+  }
+
+  .rail-block__meta {
+    font-size: 8.5pt;
+    color: #444;
+  }
+
+  .rail-block__caution {
+    color: #000;
+    font-weight: 700;
+  }
+
+  .rail-block--stop[data-caution] .rail-block__body {
+    border-left-style: double;
+    border-left-width: 3pt;
+  }
+
+  .rail-block--stop[data-pinned] .rail-block__body {
+    border-left-width: 3pt;
+  }
+
+  .rail-block--travel,
+  .rail-block--slack {
+    height: auto !important;
+  }
+
+  .rail-block__travel,
+  .rail-block__slack {
+    font-size: 8.5pt;
+    color: #444;
+    padding: 1mm 0 2mm;
+  }
+
+  .rail-block__slack {
+    display: none; /* free time is not worth a line on paper */
+  }
+
+  /* Kept on purpose (§9f). */
+  .day-warnings {
+    background: transparent;
+    border: 0.5pt solid #000;
+    border-left-width: 2pt;
+    margin-top: 6mm;
+    padding: 3mm 4mm;
+    break-inside: avoid;
+  }
+
+  .day-warnings__title {
+    color: #000;
+  }
+
+  .day-summary {
+    border-bottom: 0.5pt solid #999;
+    color: #444;
+    font-size: 8.5pt;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 7.5pt;
+    color: #666;
+  }
+}
