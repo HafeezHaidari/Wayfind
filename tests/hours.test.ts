@@ -6,6 +6,7 @@ import {
   fitsWithinHours,
   needsWarning,
   resolveHours,
+  stripHolidayRules,
   warningFor,
 } from "../src/core/hours.js";
 import type { OpeningHours } from "../src/shared/types.js";
@@ -177,5 +178,49 @@ describe("closedWeekdays", () => {
 
   it("reports none when hours are unknown", () => {
     expect(closedWeekdays(null, PORTO)).toEqual([]);
+  });
+});
+
+describe("public-holiday rules (the PH trap)", () => {
+  // "Tu-Su 10:00-18:00; PH off" is an ordinary museum, and the reference parser
+  // throws on it unless it knows the country. Treating that throw as "closed"
+  // silently deleted a large share of every city's real museums.
+  const withPH = osm("Tu-Su 10:00-18:00; PH off");
+
+  it("resolves normally when the country is known", () => {
+    const res = resolveHours(withPH, TUESDAY, { ...PORTO, countryCode: "pt" });
+    expect(res).toMatchObject({ kind: "known", windows: [{ openMin: 600, closeMin: 1080 }] });
+    expect(closedAllDay(res)).toBe(false);
+  });
+
+  it("still resolves without a country, by dropping the holiday clause", () => {
+    const res = resolveHours(withPH, TUESDAY, PORTO);
+    expect(closedAllDay(res)).toBe(false);
+    expect(res).toMatchObject({ kind: "known", windows: [{ openMin: 600, closeMin: 1080 }] });
+  });
+
+  it("marks a holiday-stripped reading as unverified", () => {
+    expect(needsWarning(resolveHours(withPH, TUESDAY, PORTO))).toBe(true);
+    expect(needsWarning(resolveHours(withPH, TUESDAY, { ...PORTO, countryCode: "pt" }))).toBe(false);
+  });
+
+  it("keeps the weekday closure when the holiday clause is dropped", () => {
+    expect(closedAllDay(resolveHours(withPH, MONDAY, PORTO))).toBe(true);
+  });
+
+  it("handles a holiday clause that grants hours rather than removing them", () => {
+    const res = resolveHours(
+      osm("Mo-Fr 09:00-17:00; Sa,Su,PH 10:00-19:00"),
+      TUESDAY,
+      PORTO,
+    );
+    expect(res).toMatchObject({ kind: "known", windows: [{ openMin: 540, closeMin: 1020 }] });
+  });
+
+  it("strips only the holiday parts", () => {
+    expect(stripHolidayRules("Mo-Fr 09:00-17:00; PH off")).toBe("Mo-Fr 09:00-17:00");
+    expect(stripHolidayRules("Tu-Su 10:00-18:00; Jan 01 off; PH 15:00-19:00")).toBe(
+      "Tu-Su 10:00-18:00; Jan 01 off",
+    );
   });
 });

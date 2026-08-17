@@ -34,6 +34,7 @@ export type CategoryKey =
   | "bridge"
   | "theatre"
   | "street-art"
+  | "activity"
   | "zoo-aquarium";
 
 export type Category = {
@@ -50,6 +51,12 @@ export type Category = {
   defaultPriceTier: 0 | 1 | 2 | 3 | null;
   /** Overpass selectors, e.g. `["tourism"="museum"]`. Any match assigns the category. */
   overpass: string[];
+  /**
+   * How many objects to fetch for this category in one query. Per-category
+   * rather than pooled, so a city's several hundred artwork nodes cannot crowd
+   * its museums out of the response (see src/server/pipeline/overpass.ts).
+   */
+  fetchLimit: number;
   /** Categories that are meal venues, used by §7b. */
   meal?: "lunch" | "dinner" | "either";
   /** Roughly how kid-friendly, -1 discourage / 0 neutral / 1 encourage (§6a group fit). */
@@ -71,6 +78,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 60,
     defaultPriceTier: 2,
     overpass: ['["tourism"="museum"]'],
+    fetchLimit: 90,
     kidFit: 0,
     indoor: true,
   },
@@ -83,6 +91,7 @@ export const CATEGORIES: Category[] = [
     defaultPriceTier: 1,
     // Assigned by refinement in `categorise`, never fetched separately.
     overpass: [],
+    fetchLimit: 0,
     kidFit: 0,
     indoor: true,
   },
@@ -94,6 +103,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 30,
     defaultPriceTier: 1,
     overpass: ['["tourism"="gallery"]'],
+    fetchLimit: 60,
     kidFit: -1,
     indoor: true,
   },
@@ -105,6 +115,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 45,
     defaultPriceTier: 2,
     overpass: ['["historic"="castle"]', '["historic"="palace"]', '["historic"="fort"]'],
+    fetchLimit: 60,
     kidFit: 1,
     indoor: true,
   },
@@ -116,6 +127,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 40,
     defaultPriceTier: 1,
     overpass: ['["historic"="archaeological_site"]', '["historic"="ruins"]'],
+    fetchLimit: 60,
     kidFit: 0,
     indoor: false,
   },
@@ -127,6 +139,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["historic"="monument"]', '["historic"="memorial"]', '["tourism"="attraction"]'],
+    fetchLimit: 200,
     kidFit: 0,
     indoor: false,
   },
@@ -138,6 +151,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["man_made"="bridge"]'],
+    fetchLimit: 60,
     kidFit: 0,
     indoor: false,
   },
@@ -149,6 +163,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["tourism"="viewpoint"]'],
+    fetchLimit: 90,
     kidFit: 1,
     indoor: false,
   },
@@ -160,6 +175,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 25,
     defaultPriceTier: 0,
     overpass: ['["leisure"="park"]'],
+    fetchLimit: 90,
     kidFit: 1,
     indoor: false,
   },
@@ -171,6 +187,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 30,
     defaultPriceTier: 1,
     overpass: ['["leisure"="garden"]["garden:type"="botanical"]', '["tourism"="garden"]'],
+    fetchLimit: 40,
     kidFit: 0,
     indoor: false,
   },
@@ -182,6 +199,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 45,
     defaultPriceTier: 0,
     overpass: ['["leisure"="nature_reserve"]'],
+    fetchLimit: 40,
     kidFit: 0,
     indoor: false,
   },
@@ -193,6 +211,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 45,
     defaultPriceTier: 0,
     overpass: ['["natural"="beach"]'],
+    fetchLimit: 40,
     kidFit: 1,
     indoor: false,
   },
@@ -204,6 +223,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 60,
     defaultPriceTier: 2,
     overpass: ['["tourism"="zoo"]', '["tourism"="aquarium"]'],
+    fetchLimit: 20,
     kidFit: 1,
     indoor: false,
   },
@@ -216,6 +236,7 @@ export const CATEGORIES: Category[] = [
     defaultPriceTier: 1,
     overpass: ['["amenity"="cafe"]'],
     meal: "lunch",
+    fetchLimit: 60,
     kidFit: 0,
     indoor: true,
   },
@@ -228,6 +249,7 @@ export const CATEGORIES: Category[] = [
     defaultPriceTier: 2,
     overpass: ['["amenity"="restaurant"]'],
     meal: "either",
+    fetchLimit: 70,
     kidFit: 0,
     indoor: true,
   },
@@ -239,6 +261,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 40,
     defaultPriceTier: 2,
     overpass: ['["amenity"="bar"]', '["amenity"="pub"]'],
+    fetchLimit: 50,
     kidFit: -1,
     indoor: true,
   },
@@ -250,6 +273,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 60,
     defaultPriceTier: 2,
     overpass: ['["amenity"="nightclub"]', '["amenity"="music_venue"]'],
+    fetchLimit: 40,
     kidFit: -1,
     indoor: true,
   },
@@ -261,6 +285,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 60,
     defaultPriceTier: 2,
     overpass: ['["amenity"="theatre"]'],
+    fetchLimit: 40,
     kidFit: 0,
     indoor: true,
   },
@@ -273,6 +298,7 @@ export const CATEGORIES: Category[] = [
     defaultPriceTier: 1,
     overpass: ['["amenity"="marketplace"]', '["shop"="market"]'],
     meal: "lunch",
+    fetchLimit: 40,
     kidFit: 1,
     indoor: false,
   },
@@ -284,6 +310,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["building"="cathedral"]', '["amenity"="place_of_worship"]'],
+    fetchLimit: 90,
     kidFit: -1,
     indoor: true,
   },
@@ -295,6 +322,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["historic"="wayside_shrine"]'],
+    fetchLimit: 40,
     kidFit: -1,
     indoor: false,
   },
@@ -306,6 +334,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 45,
     defaultPriceTier: 0,
     overpass: ['["place"="neighbourhood"]', '["place"="quarter"]'],
+    fetchLimit: 60,
     kidFit: 0,
     indoor: false,
   },
@@ -317,7 +346,22 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 15,
     defaultPriceTier: 0,
     overpass: ['["tourism"="artwork"]'],
+    fetchLimit: 90,
     kidFit: 0,
+    indoor: false,
+  },
+  {
+    key: "activity",
+    label: "Activity",
+    tags: ["offbeat", "neighbourhoods"],
+    durationMin: 90,
+    minDurationMin: 45,
+    defaultPriceTier: 2,
+    // Wikivoyage's "Do" section only: a river cruise or a stadium tour has no
+    // single OSM tag, and guessing one would invent places rather than find them.
+    overpass: [],
+    fetchLimit: 0,
+    kidFit: 1,
     indoor: false,
   },
   {
@@ -328,6 +372,7 @@ export const CATEGORIES: Category[] = [
     minDurationMin: 25,
     defaultPriceTier: 2,
     overpass: ['["shop"="department_store"]', '["shop"="mall"]', '["shop"="books"]'],
+    fetchLimit: 50,
     kidFit: 0,
     indoor: true,
   },

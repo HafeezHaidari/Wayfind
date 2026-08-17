@@ -9,6 +9,8 @@ export type GeocodeResult = {
   cityName: string;
   lat: number;
   lng: number;
+  /** ISO 3166-1 alpha-2; public-holiday opening rules need it (§7c). */
+  countryCode: string | null;
 };
 
 export class ApiError extends Error {

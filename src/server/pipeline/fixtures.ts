@@ -14,6 +14,7 @@ const FIXTURE_ROOT = join(process.cwd(), "fixtures");
 export type CityFixture = {
   city: string;
   centre: { lat: number; lng: number };
+  countryCode?: string | null;
   recordedAt: string;
 };
 
@@ -81,6 +82,7 @@ export function fixtureGeocode(query: string): GeocodeResult[] {
       cityName: meta.city,
       lat: meta.centre.lat,
       lng: meta.centre.lng,
+      countryCode: meta.countryCode ?? null,
     },
   ];
 }

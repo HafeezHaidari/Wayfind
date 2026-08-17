@@ -34,31 +34,81 @@ export type HoursResolution =
 
 const MINUTES_PER_DAY = 1440;
 
+/** Where a POI is, and — when known — which country's holidays apply to it. */
+export type HoursContext = { lat: number; lng: number; countryCode?: string | null };
+
 /** Parsing is the expensive part; the same tag recurs across a candidate set. */
 const parseCache = new Map<string, ParsedHours | null>();
 
-type ParsedHours = { lib: InstanceType<typeof OpeningHoursLib> };
+type ParsedHours = {
+  lib: InstanceType<typeof OpeningHoursLib>;
+  /** True when holiday rules had to be dropped to evaluate the value at all. */
+  holidaysDropped: boolean;
+};
 
-function parse(raw: string, lat: number, lng: number): ParsedHours | null {
-  const key = `${raw}@@${lat.toFixed(2)},${lng.toFixed(2)}`;
+/**
+ * `PH` (public holiday) clauses are common in OSM — "Tu-Su 10:00-18:00; PH off"
+ * is an ordinary museum. The parser can only evaluate them when it knows which
+ * country's holiday table to use, and throws otherwise. Treating that throw as
+ * "closed" silently deleted a large share of every city's real museums, so:
+ * parse with the country when we have it, and when we do not, fall back to the
+ * same value with its holiday rules removed and flag the result uncertain.
+ */
+function parse(raw: string, at: HoursContext): ParsedHours | null {
+  const country = (at.countryCode ?? "").toLowerCase();
+  const key = `${raw}@@${at.lat.toFixed(2)},${at.lng.toFixed(2)}@@${country}`;
   const hit = parseCache.get(key);
   if (hit !== undefined) return hit;
 
-  let result: ParsedHours | null = null;
-  try {
-    // The library wants a Nominatim-shaped location for sunrise/sunset and
-    // public-holiday rules. Without it those rules throw instead of resolving.
-    const lib = new OpeningHoursLib(raw, {
-      lat,
-      lon: lng,
-      address: { country_code: "", state: "" },
-    } as never);
-    result = { lib };
-  } catch {
-    result = null; // Unparseable: §7c says warn, not crash.
-  }
+  const result =
+    build(raw, at, country, false) ??
+    (hasHolidayRule(raw) ? build(stripHolidayRules(raw), at, country, true) : null);
+
   parseCache.set(key, result);
   return result;
+}
+
+function build(
+  raw: string,
+  at: HoursContext,
+  country: string,
+  holidaysDropped: boolean,
+): ParsedHours | null {
+  try {
+    // The library wants a Nominatim-shaped location for sunrise/sunset and
+    // public-holiday rules.
+    const lib = new OpeningHoursLib(raw, {
+      lat: at.lat,
+      lon: at.lng,
+      address: { country_code: country, state: "" },
+    } as never);
+    // Constructing succeeds for holiday rules even without a country table;
+    // it is evaluation that throws, so evaluate once here to find out.
+    lib.getState(new Date("2024-01-09T12:00:00"));
+    return { lib, holidaysDropped };
+  } catch {
+    return null; // Unparseable, or unevaluable: §7c says warn, not crash.
+  }
+}
+
+const HOLIDAY_RULE = /\b(PH|SH)\b/;
+
+function hasHolidayRule(raw: string): boolean {
+  return HOLIDAY_RULE.test(raw);
+}
+
+/**
+ * Drop the rule parts that mention public or school holidays, keeping the
+ * ordinary weekly schedule. "Mo-Fr 09:00-17:00; PH off" becomes
+ * "Mo-Fr 09:00-17:00" — right on any ordinary day, and the day carries a
+ * warning so nobody treats it as verified on a holiday.
+ */
+export function stripHolidayRules(raw: string): string {
+  return raw
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => part !== "" && !HOLIDAY_RULE.test(part))
+    .join("; ");
 }
 
 /**
@@ -71,23 +121,27 @@ function parse(raw: string, lat: number, lng: number): ParsedHours | null {
 export function resolveHours(
   hours: OpeningHours | null,
   isoDate: string | null,
-  at: { lat: number; lng: number },
+  at: HoursContext,
 ): HoursResolution {
   if (!hours || !hours.raw.trim()) {
     return { kind: "unknown", reason: "missing", uncertain: true };
   }
-  const parsed = parse(hours.raw, at.lat, at.lng);
+  const parsed = parse(hours.raw, at);
   if (!parsed) return { kind: "unknown", reason: "unparseable", uncertain: true };
 
   if (isoDate) {
     const day = startOfDay(isoDate);
     if (!day) return { kind: "unknown", reason: "unparseable", uncertain: true };
     const { windows, uncertain } = windowsOn(parsed, day);
-    return { kind: "known", windows, uncertain };
+    return { kind: "known", windows, uncertain: uncertain || parsed.holidaysDropped };
   }
 
   const typical = typicalWeekWindows(parsed);
-  return { kind: "undated", windows: typical.windows, uncertain: typical.uncertain };
+  return {
+    kind: "undated",
+    windows: typical.windows,
+    uncertain: typical.uncertain || parsed.holidaysDropped,
+  };
 }
 
 /** True when the POI cannot be visited at all on this date. */
@@ -164,12 +218,9 @@ export function closingPressure(res: HoursResolution, departMin: number): number
 }
 
 /** The weekdays (0 = Sunday) on which the POI is shut all day. */
-export function closedWeekdays(
-  hours: OpeningHours | null,
-  at: { lat: number; lng: number },
-): number[] {
+export function closedWeekdays(hours: OpeningHours | null, at: HoursContext): number[] {
   if (!hours) return [];
-  const parsed = parse(hours.raw, at.lat, at.lng);
+  const parsed = parse(hours.raw, at);
   if (!parsed) return [];
   const out: number[] = [];
   for (const day of sampleWeek()) {

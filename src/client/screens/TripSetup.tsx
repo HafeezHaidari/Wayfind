@@ -118,7 +118,13 @@ function CityCard({
   function choose(result: GeocodeResult) {
     setQuery(result.cityName);
     setResults(null);
-    onChange({ ...city, cityName: result.cityName, lat: result.lat, lng: result.lng });
+    onChange({
+      ...city,
+      cityName: result.cityName,
+      lat: result.lat,
+      lng: result.lng,
+      countryCode: result.countryCode,
+    });
   }
 
   return (

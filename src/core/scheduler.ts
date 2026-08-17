@@ -59,6 +59,11 @@ export type ScheduleInput = {
   /** Computed once per city per generation (§5d). Null falls back to estimates. */
   travelMatrix: TravelMatrix | null;
   pins: Pin[];
+  /**
+   * A tighter daily walking cap than the mobility preference implies, when the
+   * free-text note asked for one (§6b job 1 -> src/core/apply-diff.ts).
+   */
+  walkCapOverrideM?: number | null;
 };
 
 export type ScheduleResult = {
@@ -154,6 +159,7 @@ export function scheduleCity(input: ScheduleInput): ScheduleResult {
       cityStay,
       travelMatrix,
       cost,
+      walkCapM: walkCap(preferences, input.walkCapOverrideM),
       mealVenues: mealVenues.filter((v) => !usedMealVenues.has(v.id)),
     });
 
@@ -190,6 +196,7 @@ export function scheduleCity(input: ScheduleInput): ScheduleResult {
         cityStay,
         travelMatrix,
         cost,
+        walkCapM: walkCap(preferences, input.walkCapOverrideM),
         mealVenues: mealVenues.filter((v) => !usedMealVenues.has(v.id) || isUsedBy(meals[dayIndex], v.id)),
       });
       if (laid.stops.length > days[dayIndex].stops.length) {
@@ -238,6 +245,7 @@ type LayOutArgs = {
   cityStay: CityStay;
   travelMatrix: TravelMatrix | null;
   cost: (a: string, b: string) => number;
+  walkCapM: number;
   mealVenues: Poi[];
 };
 
@@ -252,7 +260,7 @@ function layOutDay(args: LayOutArgs): LaidDay {
   const { dayIndex, date, pois, preferences, pins, basecamp, cityStay, travelMatrix, cost } = args;
   const dayStart = DAY_START_MIN[preferences.dayStart];
   const dayEnd = DAY_END_MIN[preferences.dayEnd];
-  const walkCap = DAILY_WALK_CAP_M[preferences.mobility];
+  const walkCapMetres = args.walkCapM;
   const paceMax = PACE_TARGETS[preferences.pace].max;
 
   const stops: ScheduledStop[] = [];
@@ -261,7 +269,9 @@ function layOutDay(args: LayOutArgs): LaidDay {
   const dropped: DroppedCandidate[] = [];
 
   const pinFor = (id: string) => pins.find((p) => p.poiId === id) ?? null;
-  const hoursFor = (poi: Poi) => resolveHours(poi.openingHours, date, { lat: poi.lat, lng: poi.lng });
+  const country = cityStay.countryCode ?? null;
+  const hoursFor = (poi: Poi) =>
+    resolveHours(poi.openingHours, date, { lat: poi.lat, lng: poi.lng, countryCode: country });
 
   // Places that are shut all day never reach the sequencer (§7c step 3).
   const openToday: Poi[] = [];
@@ -408,7 +418,7 @@ function layOutDay(args: LayOutArgs): LaidDay {
     const walkAdd = cursorId
       ? walkingLoadM(travelMatrix, cursorId, id, cursorAt, poi, preferences.transport)
       : 0;
-    if (walkedM + walkAdd > walkCap && !pin) {
+    if (walkedM + walkAdd > walkCapMetres && !pin) {
       dropped.push({
         poiId: id,
         reason: "Would push the day past the walking you asked for",
@@ -486,6 +496,12 @@ function splitPools(pois: Poi[], preferences: Preferences): { sights: Poi[]; mea
 function hasWantedTag(poi: Poi, preferences: Preferences): boolean {
   if (poi.tags.length === 0) return true; // user-added places have no tags
   return poi.tags.some((tag) => (preferences.interests[tag] ?? 1) > 0);
+}
+
+/** The mobility preference's cap, tightened by any free-text override (§6b). */
+function walkCap(preferences: Preferences, override: number | null | undefined): number {
+  const base = DAILY_WALK_CAP_M[preferences.mobility];
+  return typeof override === "number" && override > 0 ? Math.min(base, override) : base;
 }
 
 function paceMid(pace: Preferences["pace"]): number {
@@ -566,7 +582,11 @@ function pickMealVenue(
 
   for (const venue of shortlist) {
     const travel = cursorId ? args.cost(cursorId, venue.id) : 0;
-    const res = resolveHours(venue.openingHours, date, { lat: venue.lat, lng: venue.lng });
+    const res = resolveHours(venue.openingHours, date, {
+      lat: venue.lat,
+      lng: venue.lng,
+      countryCode: args.cityStay.countryCode ?? null,
+    });
     if (closedAllDay(res)) continue;
     const start = earliestFit(res, startFrom + travel, duration, dayEnd);
     if (start === null) continue;
@@ -615,7 +635,11 @@ function assignClustersToDays(
       let p = 0;
       if (weekday !== null) {
         for (const poi of cluster) {
-          const shut = closedWeekdays(poi.openingHours, { lat: poi.lat, lng: poi.lng });
+          const shut = closedWeekdays(poi.openingHours, {
+            lat: poi.lat,
+            lng: poi.lng,
+            countryCode: cityStay.countryCode ?? null,
+          });
           // Losing a high-scoring place to a weekday closure is the cost we are
           // trying to avoid, so the penalty is that place's score.
           if (shut.includes(weekday)) p += Math.max(1, poi.score);

@@ -21,6 +21,7 @@ export function blankCity(): CityStay {
     days: 3,
     basecampLat: null,
     basecampLng: null,
+    countryCode: null,
   };
 }
 

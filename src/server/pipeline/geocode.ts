@@ -31,6 +31,7 @@ export async function geocodeCity(query: string): Promise<GeocodeResult[]> {
       cityName: pickCityName(r, query),
       lat: Number(r.lat),
       lng: Number(r.lon),
+      countryCode: r.address?.country_code?.toLowerCase() ?? null,
     }));
 }
 

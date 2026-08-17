@@ -7,6 +7,8 @@ export type GeocodeResult = {
   cityName: string;
   lat: number;
   lng: number;
+  /** ISO 3166-1 alpha-2, used to resolve public-holiday opening rules (§7c). */
+  countryCode: string | null;
 };
 
 const EARTH_RADIUS_M = 6_371_000;

@@ -1,0 +1,639 @@
+{
+  "preferences": "defaults",
+  "recordedAt": "2026-08-17T12:52:21.060Z",
+  "top": [
+    {
+      "id": "node/2478836067",
+      "name": "Palácio da Bolsa",
+      "category": "major-museum",
+      "score": 20.71,
+      "breakdown": {
+        "total": 20.71168347645332,
+        "interest": 7.04,
+        "editorial": 8.24,
+        "notability": 2.06,
+        "price": 1.5,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 21,
+      "hasHours": true
+    },
+    {
+      "id": "relation/3219925",
+      "name": "Tesouro-Museu da Sé do Porto",
+      "category": "small-museum",
+      "score": 20.37,
+      "breakdown": {
+        "total": 20.374018625953983,
+        "interest": 7.04,
+        "editorial": 8.34,
+        "notability": 2.11,
+        "price": 2,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 23,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/casa-da-musica-41.1589--8.6307",
+      "name": "Casa da Música",
+      "category": "monument",
+      "score": 20.37,
+      "breakdown": {
+        "total": 20.368130303226874,
+        "interest": 7.17,
+        "editorial": 7.76,
+        "notability": 2.19,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 26,
+      "hasHours": false
+    },
+    {
+      "id": "node/4228667597",
+      "name": "Museu de Arte Contemporânea de Serralves",
+      "category": "major-museum",
+      "score": 20.08,
+      "breakdown": {
+        "total": 20.08407296017294,
+        "interest": 7.17,
+        "editorial": 8.01,
+        "notability": 1.53,
+        "price": 1.5,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 9,
+      "hasHours": true
+    },
+    {
+      "id": "node/2206402504",
+      "name": "Buraquinho - Esplanada da Ribeira",
+      "category": "restaurant",
+      "score": 19.87,
+      "breakdown": {
+        "total": 19.872474599517204,
+        "interest": 7.42,
+        "editorial": 8.17,
+        "notability": 1.53,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food",
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 9,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/port-wine-institute-41.1420--8.6155",
+      "name": "Port Wine Institute",
+      "category": "monument",
+      "score": 19.63,
+      "breakdown": {
+        "total": 19.63436288198529,
+        "interest": 7.17,
+        "editorial": 8.03,
+        "notability": 1.19,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 5,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/fc-porto-41.1618--8.5839",
+      "name": "FC Porto",
+      "category": "activity",
+      "score": 19.62,
+      "breakdown": {
+        "total": 19.619725627316164,
+        "interest": 7.42,
+        "editorial": 7.11,
+        "notability": 2.53,
+        "price": 1.5,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 44,
+      "hasHours": false
+    },
+    {
+      "id": "node/6669923450",
+      "name": "Museu de São Francisco do Porto",
+      "category": "small-museum",
+      "score": 19.48,
+      "breakdown": {
+        "total": 19.478111897731058,
+        "interest": 7.04,
+        "editorial": 7.57,
+        "notability": 1.99,
+        "price": 2,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 19,
+      "hasHours": false
+    },
+    {
+      "id": "node/12514092225",
+      "name": "Livraria Lello & Irmão",
+      "category": "monument",
+      "score": 19.44,
+      "breakdown": {
+        "total": 19.44359315531171,
+        "interest": 7.17,
+        "editorial": 7.88,
+        "notability": 2.02,
+        "price": 1.5,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 20,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/city-hall-41.1499--8.6108",
+      "name": "City Hall",
+      "category": "monument",
+      "score": 19.42,
+      "breakdown": {
+        "total": 19.41759827545426,
+        "interest": 7.17,
+        "editorial": 7.3,
+        "notability": 1.71,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 12,
+      "hasHours": false
+    },
+    {
+      "id": "relation/3046626",
+      "name": "Mercado do Bolhão",
+      "category": "monument",
+      "score": 19.29,
+      "breakdown": {
+        "total": 19.29391206231316,
+        "interest": 7.17,
+        "editorial": 7.69,
+        "notability": 1.19,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 5,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/boavista-fc-41.1622--8.6428",
+      "name": "Boavista FC",
+      "category": "activity",
+      "score": 19.26,
+      "breakdown": {
+        "total": 19.255698178896942,
+        "interest": 7.42,
+        "editorial": 7.06,
+        "notability": 2.22,
+        "price": 1.5,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 27,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/pavilhao-rosa-mota-41.1469--8.6260",
+      "name": "Pavilhão Rosa Mota",
+      "category": "monument",
+      "score": 19.01,
+      "breakdown": {
+        "total": 19.011119544914788,
+        "interest": 7.17,
+        "editorial": 7.21,
+        "notability": 1.38,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 7,
+      "hasHours": false
+    },
+    {
+      "id": "node/4586091689",
+      "name": "Centro Português de Fotografia",
+      "category": "major-museum",
+      "score": 18.97,
+      "breakdown": {
+        "total": 18.973747352961038,
+        "interest": 7.17,
+        "editorial": 7.26,
+        "notability": 1.29,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 6,
+      "hasHours": true
+    },
+    {
+      "id": "way/210757796",
+      "name": "Teatro Nacional São João",
+      "category": "monument",
+      "score": 18.93,
+      "breakdown": {
+        "total": 18.92658368120407,
+        "interest": 7.17,
+        "editorial": 7.42,
+        "notability": 1.46,
+        "price": 2,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 8,
+      "hasHours": false
+    },
+    {
+      "id": "way/261265893",
+      "name": "Museu Nacional Soares dos Reis",
+      "category": "major-museum",
+      "score": 18.85,
+      "breakdown": {
+        "total": 18.84694690151062,
+        "interest": 7.17,
+        "editorial": 7.28,
+        "notability": 1.65,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 11,
+      "hasHours": true
+    },
+    {
+      "id": "node/6661617235",
+      "name": "Museu dos Clérigos",
+      "category": "small-museum",
+      "score": 18.36,
+      "breakdown": {
+        "total": 18.358799866519867,
+        "interest": 7.12,
+        "editorial": 8.03,
+        "notability": 0.46,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history",
+          "food",
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 1,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/castelo-do-queijo-41.1686--8.6900",
+      "name": "Castelo Do Queijo",
+      "category": "castle",
+      "score": 18.35,
+      "breakdown": {
+        "total": 18.34926810743358,
+        "interest": 7.42,
+        "editorial": 6.72,
+        "notability": 1.46,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 8,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/she-changes-41.1734--8.6887",
+      "name": "She Changes",
+      "category": "monument",
+      "score": 18.12,
+      "breakdown": {
+        "total": 18.120215853258312,
+        "interest": 7.17,
+        "editorial": 6.78,
+        "notability": 0.92,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 3,
+      "hasHours": false
+    },
+    {
+      "id": "node/2213211042",
+      "name": "O Fado",
+      "category": "restaurant",
+      "score": 17.52,
+      "breakdown": {
+        "total": 17.51502732240437,
+        "interest": 6.67,
+        "editorial": 8.1,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "way/255778741",
+      "name": "Museu do Romântico",
+      "category": "major-museum",
+      "score": 17.49,
+      "breakdown": {
+        "total": 17.49407394442717,
+        "interest": 6.97,
+        "editorial": 7.05,
+        "notability": 0.73,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 2,
+      "hasHours": true
+    },
+    {
+      "id": "wikivoyage/museu-do-vinho-do-porto-41.1450--8.6267",
+      "name": "Museu do Vinho do Porto",
+      "category": "major-museum",
+      "score": 17.3,
+      "breakdown": {
+        "total": 17.30388183373298,
+        "interest": 7.17,
+        "editorial": 6.93,
+        "notability": 0.46,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 1,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/cafe-piolho-ancora-d-ouro-41.1469--8.6166",
+      "name": "Café Piolho / Âncora d'Ouro",
+      "category": "restaurant",
+      "score": 17.11,
+      "breakdown": {
+        "total": 17.1051912568306,
+        "interest": 6.67,
+        "editorial": 7.69,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/taxca-41.1490--8.6129",
+      "name": "Taxca",
+      "category": "restaurant",
+      "score": 16.88,
+      "breakdown": {
+        "total": 16.877506830601092,
+        "interest": 6.67,
+        "editorial": 7.46,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/taberna-folias-de-baco-41.1452--8.6137",
+      "name": "Taberna Folias de Baco",
+      "category": "restaurant",
+      "score": 16.18,
+      "breakdown": {
+        "total": 16.182957650273224,
+        "interest": 6.67,
+        "editorial": 6.77,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/laurear-41.1473--8.6126",
+      "name": "Laurear",
+      "category": "restaurant",
+      "score": 16.1,
+      "breakdown": {
+        "total": 16.104474043715847,
+        "interest": 6.67,
+        "editorial": 6.69,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/trinkas-petisqueira-lounge-41.1473--8.6152",
+      "name": "Trinkas Petisqueira Lounge",
+      "category": "restaurant",
+      "score": 16.03,
+      "breakdown": {
+        "total": 16.02974043715847,
+        "interest": 6.67,
+        "editorial": 6.61,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/churrasqueira-brasil-41.1450--8.6153",
+      "name": "Churrasqueira Brasil",
+      "category": "restaurant",
+      "score": 15.96,
+      "breakdown": {
+        "total": 15.959023224043715,
+        "interest": 6.67,
+        "editorial": 6.54,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/a-loja-dos-pasteis-de-chaves-41.1510--8.6058",
+      "name": "A Loja dos Pastéis de Chaves",
+      "category": "restaurant",
+      "score": 15.92,
+      "breakdown": {
+        "total": 15.922322404371585,
+        "interest": 6.67,
+        "editorial": 6.51,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/casa-das-tortas-41.1467--8.6052",
+      "name": "Casa Das Tortas",
+      "category": "restaurant",
+      "score": 15.84,
+      "breakdown": {
+        "total": 15.839289617486338,
+        "interest": 6.67,
+        "editorial": 6.42,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    }
+  ]
+}

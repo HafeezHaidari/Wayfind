@@ -1,0 +1,636 @@
+{
+  "preferences": "defaults",
+  "recordedAt": "2026-08-17T12:53:07.432Z",
+  "top": [
+    {
+      "id": "wikivoyage/lisboa-ask-me-centre-38.7079--9.1379",
+      "name": "Lisboa Ask Me Centre",
+      "category": "monument",
+      "score": 18.88,
+      "breakdown": {
+        "total": 18.884166666666665,
+        "interest": 7.17,
+        "editorial": 8.47,
+        "notability": 0,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/estacao-maritima-de-alcantara-38.6988--9.1735",
+      "name": "Estação Marítima de Alcântara",
+      "category": "activity",
+      "score": 18.5,
+      "breakdown": {
+        "total": 18.500522611492997,
+        "interest": 7.42,
+        "editorial": 7.45,
+        "notability": 1.07,
+        "price": 1.5,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 4,
+      "hasHours": false
+    },
+    {
+      "id": "node/5470684964",
+      "name": "Figueira-da-Austrália",
+      "category": "monument",
+      "score": 17.95,
+      "breakdown": {
+        "total": 17.95343137254902,
+        "interest": 7.17,
+        "editorial": 6.91,
+        "notability": 0,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/estacao-maritima-de-santa-apolonia-38.7135--9.1220",
+      "name": "Estação Marítima de Santa Apolónia",
+      "category": "activity",
+      "score": 17.38,
+      "breakdown": {
+        "total": 17.381127450980394,
+        "interest": 7.42,
+        "editorial": 7.4,
+        "notability": 0,
+        "price": 1.5,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "node/5457844761",
+      "name": "Vice-Reis da Índia",
+      "category": "monument",
+      "score": 16.89,
+      "breakdown": {
+        "total": 16.887254901960784,
+        "interest": 7.17,
+        "editorial": 6.47,
+        "notability": 0,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "way/159992191",
+      "name": "Jardim de Santos",
+      "category": "park",
+      "score": 15.4,
+      "breakdown": {
+        "total": 15.400032237580499,
+        "interest": 3.33,
+        "editorial": 8.09,
+        "notability": 0.73,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": []
+      },
+      "editorialListed": true,
+      "sitelinks": 2,
+      "hasHours": false
+    },
+    {
+      "id": "wikivoyage/novo-terminal-de-cruzeiros-de-lisboa-38.7102--9.1266",
+      "name": "Novo Terminal de Cruzeiros de Lisboa",
+      "category": "garden",
+      "score": 13.94,
+      "breakdown": {
+        "total": 13.936274509803923,
+        "interest": 3.33,
+        "editorial": 7.35,
+        "notability": 0,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": []
+      },
+      "editorialListed": true,
+      "sitelinks": 0,
+      "hasHours": false
+    },
+    {
+      "id": "relation/11318514",
+      "name": "Mosteiro dos Jerónimos",
+      "category": "major-museum",
+      "score": 13.18,
+      "breakdown": {
+        "total": 13.1821558513661,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 2.64,
+        "price": 1.5,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 52,
+      "hasHours": true
+    },
+    {
+      "id": "way/485215103",
+      "name": "Ponte 25 de Abril",
+      "category": "monument",
+      "score": 12.76,
+      "breakdown": {
+        "total": 12.761914076515025,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 2.35,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 33,
+      "hasHours": false
+    },
+    {
+      "id": "way/95408993",
+      "name": "Igreja de São Domingos",
+      "category": "church",
+      "score": 12.75,
+      "breakdown": {
+        "total": 12.747516308241147,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.71,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 12,
+      "hasHours": false
+    },
+    {
+      "id": "node/207597971",
+      "name": "Alfama",
+      "category": "neighbourhood",
+      "score": 12.59,
+      "breakdown": {
+        "total": 12.593692577761654,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 2.36,
+        "price": 2,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 34,
+      "hasHours": false
+    },
+    {
+      "id": "node/5457851354",
+      "name": "Sophia de Mello Breyner Andresen",
+      "category": "monument",
+      "score": 12.44,
+      "breakdown": {
+        "total": 12.435817025092184,
+        "interest": 7.27,
+        "editorial": 0,
+        "notability": 1.29,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history",
+          "viewpoints"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 6,
+      "hasHours": false
+    },
+    {
+      "id": "node/4419041593",
+      "name": "Museu do Aljube - Resistência e Liberdade",
+      "category": "major-museum",
+      "score": 12.42,
+      "breakdown": {
+        "total": 12.424623643275444,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.38,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 7,
+      "hasHours": true
+    },
+    {
+      "id": "node/13950436040",
+      "name": "Aqueduto das Águas Livres",
+      "category": "major-museum",
+      "score": 12.41,
+      "breakdown": {
+        "total": 12.409013537075321,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.99,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 19,
+      "hasHours": true
+    },
+    {
+      "id": "way/1451054092",
+      "name": "Museu Nacional do Azulejo",
+      "category": "major-museum",
+      "score": 12.39,
+      "breakdown": {
+        "total": 12.385609302145037,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.84,
+        "price": 1.5,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 15,
+      "hasHours": true
+    },
+    {
+      "id": "way/98656587",
+      "name": "Museu Nacional de Arte Antiga",
+      "category": "major-museum",
+      "score": 12.36,
+      "breakdown": {
+        "total": 12.358601614702284,
+        "interest": 7.42,
+        "editorial": 0,
+        "notability": 2.19,
+        "price": 1.5,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history",
+          "food"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 26,
+      "hasHours": true
+    },
+    {
+      "id": "way/39729235",
+      "name": "Mercado da Ribeira",
+      "category": "market",
+      "score": 12.34,
+      "breakdown": {
+        "total": 12.335817025092185,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.29,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 6,
+      "hasHours": true
+    },
+    {
+      "id": "node/489736332",
+      "name": "A Brasileira",
+      "category": "cafe",
+      "score": 12.2,
+      "breakdown": {
+        "total": 12.198027878205728,
+        "interest": 7.42,
+        "editorial": 0,
+        "notability": 1.53,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 9,
+      "hasHours": true
+    },
+    {
+      "id": "relation/11381632",
+      "name": "Museu de Arte, Arquitetura e Tecnologia (MAAT)",
+      "category": "major-museum",
+      "score": 12.19,
+      "breakdown": {
+        "total": 12.19428296708439,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.65,
+        "price": 1.5,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 11,
+      "hasHours": true
+    },
+    {
+      "id": "way/9253917",
+      "name": "Panteão Nacional",
+      "category": "monument",
+      "score": 12.16,
+      "breakdown": {
+        "total": 12.155268625953983,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 2.11,
+        "price": 2,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 23,
+      "hasHours": true
+    },
+    {
+      "id": "node/5470684978",
+      "name": "Tipuana",
+      "category": "monument",
+      "score": 12.12,
+      "breakdown": {
+        "total": 12.122516308241147,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.71,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 12,
+      "hasHours": false
+    },
+    {
+      "id": "way/96319696",
+      "name": "Igreja de Santo António de Lisboa",
+      "category": "monument",
+      "score": 12.12,
+      "breakdown": {
+        "total": 12.122516308241147,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.71,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 12,
+      "hasHours": true
+    },
+    {
+      "id": "way/317549565",
+      "name": "Mercado de Campo de Ourique",
+      "category": "market",
+      "score": 12.11,
+      "breakdown": {
+        "total": 12.112042219336136,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.07,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "food"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 4,
+      "hasHours": true
+    },
+    {
+      "id": "node/5446794763",
+      "name": "Miradouro da Basílica da Estrela",
+      "category": "viewpoint",
+      "score": 12.1,
+      "breakdown": {
+        "total": 12.099900330281727,
+        "interest": 7.27,
+        "editorial": 0,
+        "notability": 1.96,
+        "price": 2,
+        "group": 0.88,
+        "crowd": 0,
+        "matchedTags": [
+          "viewpoints",
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 18,
+      "hasHours": true
+    },
+    {
+      "id": "node/3304314985",
+      "name": "Santos-o-Velho",
+      "category": "neighbourhood",
+      "score": 12.07,
+      "breakdown": {
+        "total": 12.073109302145037,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.84,
+        "price": 2,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 15,
+      "hasHours": false
+    },
+    {
+      "id": "node/5457844814",
+      "name": "Mouraria - Berço do Fado",
+      "category": "monument",
+      "score": 12.05,
+      "breakdown": {
+        "total": 12.049623643275444,
+        "interest": 7.42,
+        "editorial": 0,
+        "notability": 1.38,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history",
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 7,
+      "hasHours": false
+    },
+    {
+      "id": "node/1148841793",
+      "name": "Chiado",
+      "category": "neighbourhood",
+      "score": 12.03,
+      "breakdown": {
+        "total": 12.030187202014675,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.8,
+        "price": 2,
+        "group": 1.06,
+        "crowd": 0,
+        "matchedTags": [
+          "neighbourhoods"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 14,
+      "hasHours": false
+    },
+    {
+      "id": "node/398922337",
+      "name": "Pastéis de Belém",
+      "category": "monument",
+      "score": 11.96,
+      "breakdown": {
+        "total": 11.963637984405851,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 0.92,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 3,
+      "hasHours": true
+    },
+    {
+      "id": "node/5457851272",
+      "name": "Santo António",
+      "category": "monument",
+      "score": 11.96,
+      "breakdown": {
+        "total": 11.963637984405851,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 0.92,
+        "price": 2,
+        "group": 1.88,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 3,
+      "hasHours": false
+    },
+    {
+      "id": "node/12926040967",
+      "name": "Museu de Lisboa - Casa dos Bicos",
+      "category": "small-museum",
+      "score": 11.95,
+      "breakdown": {
+        "total": 11.948027878205728,
+        "interest": 7.17,
+        "editorial": 0,
+        "notability": 1.53,
+        "price": 2,
+        "group": 1.25,
+        "crowd": 0,
+        "matchedTags": [
+          "history"
+        ]
+      },
+      "editorialListed": false,
+      "sitelinks": 9,
+      "hasHours": true
+    }
+  ]
+}

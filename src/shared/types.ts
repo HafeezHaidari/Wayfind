@@ -20,6 +20,14 @@ export type CityStay = {
   days: number;
   basecampLat: number | null; // hotel/accommodation if the user supplied one
   basecampLng: number | null;
+  /**
+   * ISO 3166-1 alpha-2, from the geocoder. An addition to the §3 model with a
+   * concrete cause: OSM `opening_hours` values routinely carry `PH` (public
+   * holiday) clauses, and the parser can only evaluate those against a known
+   * country's holiday table. Without it, every museum tagged
+   * "Tu-Su 10:00-18:00; PH off" reads as closed and vanishes from the plan.
+   */
+  countryCode?: string | null;
 };
 
 export type Preferences = {
