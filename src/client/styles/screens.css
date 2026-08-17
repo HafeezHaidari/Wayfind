@@ -1,0 +1,273 @@
+/* Trip setup and interview. Signage vocabulary: numbered stops, tick marks,
+   ruled edges — no drop shadows, no rounded cards. */
+
+/* --- Trip setup ------------------------------------------------------------ */
+
+.city-card {
+  display: grid;
+  grid-template-columns: 3rem 1fr auto;
+  gap: var(--space-4);
+  align-items: start;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.city-card__index {
+  font-size: var(--step-2);
+  color: var(--rail);
+  line-height: 1.4;
+}
+
+.city-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.city-card__lookup {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.city-card__lookup .input {
+  flex: 1;
+}
+
+.city-card__coords {
+  font-size: var(--step--1);
+}
+
+.city-card__results {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 2px solid var(--rail);
+  padding-left: var(--space-3);
+}
+
+.city-card__error {
+  color: var(--caution);
+  font-size: var(--step--1);
+}
+
+.city-card__when {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.city-card__dates {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.city-card__dates .field {
+  flex: 0 1 12rem;
+}
+
+.city-card__days {
+  padding-bottom: 0.6rem;
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.city-card__daycount {
+  max-width: 8rem;
+}
+
+.city-card__extra summary {
+  cursor: pointer;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-spine);
+}
+
+.city-card__extra-note {
+  font-size: var(--step--1);
+  margin: var(--space-2) 0 var(--space-3);
+  max-width: 34rem;
+}
+
+.city-card__coord-inputs {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.city-card__coord-inputs .field {
+  flex: 1 1 10rem;
+}
+
+.city-card__remove {
+  align-self: start;
+}
+
+@media (max-width: 720px) {
+  .city-card {
+    grid-template-columns: 2rem 1fr;
+  }
+
+  .city-card__remove {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* --- Interview ------------------------------------------------------------- */
+
+.interview__progress {
+  margin-bottom: var(--space-6);
+}
+
+.interview__ticks {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+
+.interview__tick {
+  width: 2.25rem;
+  height: 4px;
+  padding: 0;
+  border: 0;
+  background: var(--ink-ghost);
+  cursor: pointer;
+}
+
+.interview__tick[data-done="true"] {
+  background: var(--rail);
+}
+
+.interview__tick[aria-current="step"] {
+  background: var(--ink);
+}
+
+.interview__question {
+  min-height: 24rem;
+}
+
+.interview__nav {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.interest-legend {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.interest-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.interest-swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--hairline-strong);
+}
+
+.interest-swatch[data-level="0"] {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    var(--rail) 2px,
+    var(--rail) 3px
+  );
+}
+
+.interest-swatch[data-level="1"] {
+  background: var(--paper-raised);
+}
+
+.interest-swatch[data-level="2"] {
+  background: var(--rail);
+}
+
+.interest-swatch[data-level="3"] {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.interest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--space-2);
+}
+
+.interest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0.65rem 0.75rem;
+  min-height: 4.25rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.interest__name {
+  font-family: var(--font-place);
+  font-variation-settings: var(--place-variation);
+  font-weight: 600;
+}
+
+.interest__state {
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.interest[data-level="0"] {
+  color: var(--ink-soft);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--paper-sunk),
+    var(--paper-sunk) 5px,
+    var(--paper) 5px,
+    var(--paper) 6px
+  );
+}
+
+.interest[data-level="0"] .interest__name {
+  text-decoration: line-through;
+  text-decoration-color: var(--rail);
+}
+
+.interest[data-level="2"] {
+  border-color: var(--ink-soft);
+  background: var(--paper-raised);
+  box-shadow: inset 3px 0 0 var(--rail);
+}
+
+.interest[data-level="3"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  box-shadow: inset 3px 0 0 var(--paper);
+}
+
+.interest[data-level="3"] .interest__state {
+  color: color-mix(in srgb, var(--paper) 75%, var(--ink));
+}

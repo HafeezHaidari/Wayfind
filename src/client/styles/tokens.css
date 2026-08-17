@@ -1,0 +1,75 @@
+/*
+ * §9b — the whole palette. Every colour in this app derives from these six
+ * values. Nothing outside this set gets introduced.
+ *
+ * --locked and --caution are semantic, not stylistic. Green means the user
+ * locked it and the scheduler must respect it. Orange means something is
+ * unverified. If either appears where it does not carry that meaning, it is a
+ * bug, not a style choice.
+ */
+
+@import url("/fonts/fonts.css");
+
+:root {
+  --paper: #f1f3f2; /* cool off-white; explicitly not a warm cream */
+  --ink: #10201f; /* deep near-black, green undertone */
+  --ink-soft: #45514e; /* secondary text */
+  --rail: #9aa6a2; /* the time axis, hairlines, travel gaps */
+  --locked: #0b6e4f; /* user-pinned stops: fixed, respected, confirmed */
+  --caution: #b4531a; /* warnings only (§9d). Never decorative. */
+
+  /*
+   * Derived surfaces. These are the tokens above at stated alpha over --paper,
+   * not new hues — the palette stays six values wide (§9b).
+   */
+  --paper-sunk: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  --paper-raised: color-mix(in srgb, #ffffff 62%, var(--paper));
+  --hairline: color-mix(in srgb, var(--rail) 55%, transparent);
+  --hairline-strong: color-mix(in srgb, var(--rail) 100%, transparent);
+  --ink-ghost: color-mix(in srgb, var(--ink) 8%, transparent);
+  --locked-wash: color-mix(in srgb, var(--locked) 8%, var(--paper));
+  --caution-wash: color-mix(in srgb, var(--caution) 7%, var(--paper));
+
+  /* §9b type roles */
+  --font-spine: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-place: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Place names carry the personality: weight plus a slight width expansion. */
+  --place-variation: "wdth" 108;
+
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.0625rem;
+  --step-2: 1.375rem;
+  --step-3: 1.875rem;
+  --step-4: 2.625rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  --radius: 2px; /* signage, not cards: corners stay nearly square */
+  --rail-width: 76px; /* the time column; times align down it */
+  --rail-gutter: 18px; /* gap between the spine and the stop block */
+
+  /*
+   * §9a: the rail is proportional. One minute of the day is this many pixels,
+   * which is what makes a 120-minute stop visibly taller than a 30-minute one.
+   */
+  --px-per-min: 1.05;
+  --stop-min-height: 44px;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --rail-width: 58px;
+    --rail-gutter: 12px;
+    --px-per-min: 0.9;
+  }
+}
