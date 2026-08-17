@@ -2,6 +2,8 @@
 // TripBrief and the resulting itinerary live entirely in client state; the
 // server never stores either (§1).
 
+import type { CategoryKey } from "./categories.js";
+
 export type TripBrief = {
   id: string;
   name: string;
@@ -61,6 +63,14 @@ export type Poi = {
   lat: number;
   lng: number;
   tags: InterestTag[];
+  /**
+   * The catalogue category this POI was classified into (src/shared/categories.ts).
+   * An addition to the §3 model, not a replacement: `tags` still drives interest
+   * matching, but the scheduler needs to know a restaurant from a museum to
+   * fill meal slots (§7b), and §9c asks the UI to show a stop's category.
+   * Null for user-added places, which have no source tags to classify.
+   */
+  category: CategoryKey | null;
   sourceIds: { osm?: string; wikidata?: string; wikivoyage?: string };
   openingHours: OpeningHours | null; // null = unknown, treat per §7c
   typicalDurationMin: number; // from category defaults, see §5c
