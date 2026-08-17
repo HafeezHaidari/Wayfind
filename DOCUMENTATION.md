@@ -18,14 +18,17 @@ rail blocks measure exactly 3.40 px per minute, so a 120-minute stop renders 4.0
 30-minute one; the exported page renders complete with every outbound request aborted (fonts
 embedded, route drawn as SVG, warnings intact, no horizontal overflow); printing produces one day
 per page with the interactive chrome gone and times at 20px.
-**In progress:** Nothing. The build order in §0d is complete.
-**Next action:** Write the README §14 asks for (Missing Inputs at the top, sourcing strategy,
-validated cities, where to tune the scoring weights, known limitations).
+**In progress:** Nothing. The build order in §0d is complete and the README (§14) is written.
+**Next action:** None outstanding. If work resumes: the highest-value next thing is running the
+§6b LLM layer against a live key, since it is the only part of the build never exercised end to
+end. After that, improving the Wikivoyage-to-OSM match rate (currently 20 of Porto's 61 listings)
+would raise opening-hours coverage, which is the main limit on itinerary confidence.
 **Blocked / unverified:** No `ANTHROPIC_API_KEY` in the environment, so the §6b LLM layer has never
 run against a live model — its id-validation, schema and fallbacks are exercised, but the three call
-sites are unproven end to end. Porto and Lisbon are validated against live data; no other city has
-been. The public OSRM demo server serves car speeds on every profile, so walking times are derived
-from its routed distances rather than routed directly.
+sites are unproven end to end. Porto and Lisbon are validated against live data and recorded as
+fixtures; Ghent was run live end to end as a check that a city with no fixture works (2 days,
+9 stops, 16s cold). No other city has been checked. The public OSRM demo server serves car speeds on
+every profile, so walking times are derived from its routed distances rather than routed directly.
 **Active deviations from spec:** Five, all logged below: `/api/geocode` built during stage 1; `Poi`
 carries `category`; `CityStay` carries `countryCode`; a stop pinned to a time may sit outside the
 POI's hours (§7c vs §8); long slack gaps on the rail are height-capped while stops and meals stay
