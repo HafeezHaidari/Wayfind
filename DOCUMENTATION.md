@@ -3,37 +3,30 @@
 ## Current State
 <!-- OVERWRITE this whole section on every update. Do not append. -->
 
-**Stage:** 8 of 8 complete — itinerary UI, refinement loop and export (§0d stages 6, 7 and 8).
-**Verified working:** The whole flow, end to end. Trip setup with live geocoding, the nine-step
-interview (§4), sourcing (§5), ranking (§6a), the LLM layer (§6b) with structural id-validation and
-keyless fallbacks, the scheduler (§7), the proportional time rail (§9a), the synced map (§9c), day
-warnings (§9d), the alternatives panel (§9e), the refinement loop (§8: remove, pin to a day, pin to a
-time, swap in an alternative, more/less of a category, change pace — all re-scheduling against the
-cached candidate set), print (§9f) and the offline static export (§9f).
-111 tests pass (`npx vitest run`), including the full pipeline from fixtures with no network and no
-keys. `npx tsc --noEmit` clean; `npm run build` succeeds.
-Browser-verified with Playwright, since three §11b criteria are facts about rendered layout rather
-than data — `npm run preview` and `npm run verify:export` (both need `npm run dev` running):
-rail blocks measure exactly 3.40 px per minute, so a 120-minute stop renders 4.00× the height of a
-30-minute one; the exported page renders complete with every outbound request aborted (fonts
-embedded, route drawn as SVG, warnings intact, no horizontal overflow); printing produces one day
-per page with the interactive chrome gone and times at 20px.
-**In progress:** Nothing. The build order in §0d is complete and the README (§14) is written.
-**Next action:** None outstanding. If work resumes: the highest-value next thing is running the
-§6b LLM layer against a live key, since it is the only part of the build never exercised end to
-end. After that, improving the Wikivoyage-to-OSM match rate (currently 20 of Porto's 61 listings)
-would raise opening-hours coverage, which is the main limit on itinerary confidence.
-**Blocked / unverified:** No `ANTHROPIC_API_KEY` in the environment, so the §6b LLM layer has never
-run against a live model — its id-validation, schema and fallbacks are exercised, but the three call
-sites are unproven end to end. Porto and Lisbon are validated against live data and recorded as
-fixtures; Ghent was run live end to end as a check that a city with no fixture works (2 days,
-9 stops, 16s cold). No other city has been checked. The public OSRM demo server serves car speeds on
-every profile, so walking times are derived from its routed distances rather than routed directly.
-**Active deviations from spec:** Five, all logged below: `/api/geocode` built during stage 1; `Poi`
-carries `category`; `CityStay` carries `countryCode`; a stop pinned to a time may sit outside the
-POI's hours (§7c vs §8); long slack gaps on the rail are height-capped while stops and meals stay
-exactly proportional.
-**Last updated:** Stages 6-8 complete and committed.
+**Stage:** 8 of 8 complete, plus a round of fixes from the first real multi-city, non-Latin-script,
+live-data run (Tokyo + Kyoto + Osaka, 9 days).
+**Verified working:** The whole flow, end to end, live and from fixtures. 111 tests pass
+(`npx vitest run`), `npx tsc --noEmit` clean, `npm run build` succeeds. Browser checks still pass:
+rail at exactly 3.40 px/min (120 min renders 4.00× a 30 min stop), the export renders with every
+outbound request aborted, print gives one day per page. The Japan trip that previously failed
+outright now completes in about 3 minutes cold and produces the canonical landmarks for all three
+cities — Nijō Castle, Heian Shrine and Kyoto Imperial Palace; Osaka Castle, Kaiyukan and Tsūtenkaku;
+Tokyo Tower, Tsukiji Outer Market and Yasukuni Shrine — with no coverage-degradation warnings.
+**In progress:** Nothing.
+**Next action:** None outstanding. If work resumes: run the §6b LLM layer against a live key (still
+the only part never exercised end to end), then look at opening-hours coverage in Japan, which is
+low (3 of 33 scheduled Tokyo stops carry hours) because OSM tags them sparsely there.
+**Blocked / unverified:** No `ANTHROPIC_API_KEY`, so the §6b LLM layer has never run against a live
+model. Validated live: Porto, Lisbon (both also recorded as fixtures), Ghent, Tokyo, Kyoto, Osaka.
+The public OSRM demo serves car speeds on every profile, so walking times are derived from its
+routed distances. **`overpass-api.de` was fully unavailable for roughly an hour during this session**
+— returning 504 "the server is probably too busy" for even a 200-metre single-selector query — which
+is the §12 report: a required free service was unavailable, and no paid provider was substituted.
+**Active deviations from spec:** Six, all logged: `/api/geocode` built during stage 1; `Poi` carries
+`category` and `localName`; `CityStay` carries `countryCode` and `englishName`; a stop pinned to a
+time may sit outside the POI's hours (§7c vs §8); long slack gaps are height-capped while stops and
+meals stay exactly proportional.
+**Last updated:** After fixing the failures found by the first live three-city trip.
 
 ---
 
@@ -277,3 +270,75 @@ LLM rationale replaces it whenever one exists.
 **Rejected:** Leaving the space blank — it makes a considered plan look arbitrary. Writing a
 template sentence with adjectives in it — that is generation with extra steps, and it would be the
 first place a fabricated claim about a place could creep in.
+
+### A three-city live trip found six bugs at once
+**Context:** The first real run outside the fixture cities — Tokyo, Kyoto and Osaka, nine days —
+failed with `fetch failed` after a storm of 429s. Each cause was separate and all but one were mine.
+**Decision:** Fixed in order of blame:
+1. **StrictMode fired every generation twice.** The mount effect guarded on `status === "idle"`, but
+   `setStatus("working")` has not committed when StrictMode's second pass runs, so both saw idle.
+   Two generations in flight held both of Overpass's two per-IP slots and rate-limited the app
+   against itself. Now guarded by a ref.
+2. **Nothing gated outbound concurrency.** Added `limiter.ts`: one Overpass query at a time (half
+   the published allowance), one OSRM call, two Wikimedia. On the server, so it holds whatever the
+   client does.
+3. **The query never asked whether a slot was free.** Overpass publishes its own rate-limit state
+   at `/api/status`, including "Slot available after: …, in N seconds". Now consulted before each
+   query rather than firing and being refused.
+4. **Non-English city names lost the entire editorial signal.** Nominatim answers "Kyoto" with
+   京都市, and English Wikivoyage returns `missingtitle` for that. Added `name:en` to the geocode
+   request; `CityStay` carries `englishName` and Wikivoyage is tried in English first.
+5. **`fetch failed` reached the user.** §9g says errors are never vague. `travellerFacingError`
+   now maps upstream failures to something that says what happened and what to do.
+6. **Retry backoff was far too eager** at 4s, since the retry itself claims a slot. Now 10s
+   doubling to 60s, and it honours `Retry-After`.
+
+### Overpass mirrors, and the day the main instance went down
+**Context:** Mid-session, `overpass-api.de` began returning 504 "Dispatcher_Client::…timeout. The
+server is probably too busy" for *every* query — including a 200-metre single-selector probe — while
+reporting 2 free slots. That is the backend, not the rate limiter, and no amount of politeness on
+our side fixes it.
+**Decision:** Fall back across free, keyless Overpass mirrors (`OVERPASS_FALLBACK_URLS`, defaulting
+to private.coffee and kumi.systems), with a five-minute circuit breaker so a multi-city trip pays
+for a dead host once rather than once per city. This is §12's "report, do not switch to a paid
+provider" — the same provider on another host, still free, still keyless. The outage itself is
+reported in the README and above.
+**Rejected:** Waiting it out — the app would simply be broken for the duration. A paid geodata API —
+ruled out by §0b.
+
+### The query was too expensive for a dense city, and `out N` does not help
+**Context:** Even on a healthy mirror, Tokyo exceeded 180 seconds. The instinct to blame server load
+was wrong: `out N` caps *output*, not the scan, so cost tracks how much matches, not how much is
+returned. Porto (1,125 objects) took 7s; Tokyo timed out.
+**Decision:** Two structural changes, measured. Categories that are almost always a single point —
+café, restaurant, bar, viewpoint, artwork, shrine — search `node` instead of `nwr`, cutting the index
+work to a third for exactly the densest categories. And the search box shrank from 6 km to 4 km,
+which is not a performance hack dressed as product: §7d caps daily walking at 12 km *in total*, so a
+place 6 km out was never going to be scheduled. Tokyo went from >180s to **14.6s**.
+**Rejected:** Fewer, pooled category sets — that is the truncation bug that lost Porto's landmarks.
+Shrinking to 1.2 km — measured no better on a weak mirror, and it would cut real attractions.
+
+### Big cities keep their attractions in district sub-articles
+**Context:** With the English title fixed, Tokyo's Wikivoyage article parsed to 97 listings and every
+one was an embassy under "Cope"; Osaka's held only "Get in" and "Cope" entries. Both cities were
+being ranked on OpenStreetMap alone, and embassies named "Georgia" and "Sweden" were being scheduled
+as monuments.
+**Decision:** Two parts. Restrict listings to the sections §5a actually names — See, Do, Eat, Drink
+(plus Buy) — which removes the embassies. Then, when a parent article is thin, follow its
+`[[City/District]]` links and parse up to eight of them; they appear in editorial order, so the first
+few are the central districts. Prominence stays per-article, since 3rd of 20 in a district guide
+beats 3rd of 200 across eight. Tokyo, Kyoto and Osaka now produce their canonical landmarks with no
+degradation warnings.
+**Rejected:** Accepting OSM-only ranking for large cities and reporting it, which is what §12 permits
+— defensible, but the signal was there and one convention away.
+
+### Place names are shown in English and in the local script
+**Context:** 3,069 of Tokyo's 3,353 candidates carry a Japanese `name`. An itinerary of 迎賓館 and
+赤坂 is unreadable to whoever asked for it; one that shows only English is useless for reading a
+street sign. Worse, `normaliseName` stripped everything outside `[a-z0-9]`, so every Japanese name
+normalised to an empty string and name matching silently scored zero against everything.
+**Decision:** Display OSM's `name:en` when it exists (693 of 1,160 Tokyo objects have one) and keep
+`name` as `Poi.localName`, shown beside it in the rail and the export. `normaliseName` now keeps
+`\p{L}\p{N}`, so local-script names can match each other too.
+**Rejected:** Showing only the local name, or only the English one — each is useless in the
+situation the other covers.

@@ -35,6 +35,24 @@ export const env = {
   get overpassUrl(): string {
     return process.env.OVERPASS_URL?.trim() || "https://overpass-api.de/api/interpreter";
   },
+  /**
+   * Free, keyless Overpass mirrors to fall back to when the primary is down.
+   * The main instance returned 504 "the server is probably too busy" for even a
+   * 200-metre single-selector query during testing, while a mirror answered the
+   * same query in 13 seconds. One unhealthy instance should not end a trip.
+   *
+   * §0b holds: every one of these is free and keyless. §12 says report a free
+   * service being unavailable rather than switching to a paid one — this is not
+   * switching providers, it is the same provider on another host.
+   */
+  get overpassFallbackUrls(): string[] {
+    const configured = process.env.OVERPASS_FALLBACK_URLS?.trim();
+    if (configured) return configured.split(",").map((u) => u.trim()).filter(Boolean);
+    return [
+      "https://overpass.private.coffee/api/interpreter",
+      "https://overpass.kumi.systems/api/interpreter",
+    ];
+  },
   get osrmUrl(): string {
     return (process.env.OSRM_URL?.trim() || "https://router.project-osrm.org").replace(/\/$/, "");
   },

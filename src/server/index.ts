@@ -5,6 +5,7 @@ import { info, errorAt } from "./log.js";
 import { geocodeCity } from "./pipeline/geocode.js";
 import { generateItinerary } from "./pipeline/generate.js";
 import { listFixtureCities } from "./pipeline/fixtures.js";
+import { travellerFacingError } from "./pipeline/http.js";
 
 /**
  * A stateless pipeline: brief in, itinerary out (§1). Nothing is written to
@@ -49,9 +50,7 @@ app.post("/api/generate", async (req, res) => {
   } catch (err) {
     // §11c: never swallow an exception and return an empty success.
     errorAt("generate", err);
-    const message =
-      err instanceof Error ? err.message : "Something went wrong building the itinerary.";
-    res.status(502).json({ error: message, stage: "generate" });
+    res.status(502).json({ error: travellerFacingError(err), stage: "generate" });
   }
 });
 

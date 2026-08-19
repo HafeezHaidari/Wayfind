@@ -9,6 +9,7 @@ import type { Counters } from "./counters.js";
 import { PoiCache } from "./cache.js";
 import { coordsOf, osmId, queryOverpass, type OverpassElement, type OverpassResponse } from "./overpass.js";
 import {
+  fetchDistrictArticles,
   fetchWikivoyageArticle,
   isVisitable,
   parseListings,
@@ -53,6 +54,13 @@ export function clearSourcingCache() {
  */
 const THIN_COVERAGE_LISTINGS = 12;
 
+/**
+ * How many district sub-articles to read for a big city. Tokyo has 39; the
+ * first few are the central districts, which is where a visitor spends their
+ * time and where the editorial ordering already points.
+ */
+const MAX_DISTRICT_ARTICLES = 8;
+
 export async function sourceCity(
   city: CityStay,
   preferences: Preferences,
@@ -66,7 +74,8 @@ export async function sourceCity(
   const centre: LatLng = { lat: city.lat, lng: city.lng };
 
   const [article, overpass] = await Promise.all([
-    fetchWikivoyageArticle(city.cityName, counters).catch((err) => {
+    // English exonym first, local name as the fallback (§5a).
+    fetchWikivoyageArticle([city.englishName ?? "", city.cityName], counters).catch((err) => {
       // Editorial signal is valuable but not load-bearing: OSM-only ranking is
       // worse, not broken. Report it rather than failing the generation (§12).
       info(`Wikivoyage lookup failed for ${city.cityName}: ${String(err)}`);
@@ -75,7 +84,21 @@ export async function sourceCity(
     loadOverpass(centre, categories, city.cityName, counters),
   ]);
 
-  const listings = article ? parseListings(article).filter(isVisitable) : [];
+  // §5a — a thin parent article usually means a big city whose attractions live
+  // in district sub-articles. Follow them rather than falling back to OSM alone.
+  let listings = article ? parseListings(article).filter(isVisitable) : [];
+  if (article && listings.length < THIN_COVERAGE_LISTINGS) {
+    const parentTitle = city.englishName ?? city.cityName;
+    const districts = await fetchDistrictArticles(
+      parentTitle,
+      article,
+      counters,
+      MAX_DISTRICT_ARTICLES,
+    ).catch(() => [] as string[]);
+    for (const wikitext of districts) {
+      listings = listings.concat(parseListings(wikitext).filter(isVisitable));
+    }
+  }
   const result = await assembleCandidates({
     city,
     centre,
@@ -136,6 +159,9 @@ export async function assembleCandidates(input: {
 
   const editorialOnly: Candidate[] = [];
   const total = listings.length;
+  // Prominence is per-article: being 3rd of 20 in a district guide is a
+  // stronger signal than being 3rd of 200 across eight of them.
+  const totalFor = (listing: WikivoyageListing) => listing.articleTotal || total;
 
   for (const listing of listings) {
     const match = bestMatch(
@@ -143,7 +169,7 @@ export async function assembleCandidates(input: {
       matchTargets,
     );
     if (match) {
-      applyEditorialSignal(match.item.candidate, listing, total);
+      applyEditorialSignal(match.item.candidate, listing, totalFor(listing));
       if (listing.wikidata && !match.item.candidate.poi.sourceIds.wikidata) {
         match.item.candidate.poi.sourceIds.wikidata = listing.wikidata;
       }
@@ -151,7 +177,7 @@ export async function assembleCandidates(input: {
     }
     // A listing OSM did not return is still a real place a human wrote up. It
     // becomes a candidate in its own right when it has coordinates to plan with.
-    const standalone = candidateFromListing(listing, total, wanted);
+    const standalone = candidateFromListing(listing, totalFor(listing), wanted);
     if (standalone) editorialOnly.push(standalone);
   }
 
@@ -175,14 +201,17 @@ export async function assembleCandidates(input: {
   const deduped = dedupeCandidates(all);
 
   const listedCount = deduped.filter((c) => c.signals.editorialListed).length;
+  // Use the English name in traveller-facing notes: "Wikivoyage's 東京都
+  // article" reads as a bug to someone who typed "Tokyo".
+  const cityLabel = city.englishName ?? city.cityName;
   if (total === 0) {
     notes.push(
-      `No Wikivoyage article was found for ${city.cityName}, so places are ranked on OpenStreetMap ` +
+      `No Wikivoyage article was found for ${cityLabel}, so places are ranked on OpenStreetMap ` +
         `data alone. Expect a weaker sense of what's actually worth seeing.`,
     );
   } else if (listedCount < THIN_COVERAGE_LISTINGS) {
     notes.push(
-      `Wikivoyage's ${city.cityName} article lists only ${listedCount} places that could be matched, ` +
+      `Wikivoyage's ${cityLabel} article lists only ${listedCount} places that could be matched, ` +
         `so the ranking leans more on OpenStreetMap than usual.`,
     );
   }
@@ -201,7 +230,14 @@ export async function assembleCandidates(input: {
 
 function candidateFromOsm(element: OverpassElement, wanted: Set<CategoryKey>): Candidate | null {
   const tags = element.tags ?? {};
-  const name = tags.name?.trim();
+  // OSM tags the local name in `name` and the English exonym in `name:en`.
+  // Outside anglophone countries the former is the one that exists, so prefer
+  // the exonym for display and keep the local form for the traveller on the
+  // ground. This also makes Wikivoyage matching possible at all: its listings
+  // are in English, and comparing "Akasaka Palace" to 迎賓館 never matches.
+  const localised = tags["name:en"]?.trim();
+  const local = tags.name?.trim();
+  const name = localised || local;
   if (!name) return null;
   const coords = coordsOf(element);
   if (!coords) return null;
@@ -221,6 +257,7 @@ function candidateFromOsm(element: OverpassElement, wanted: Set<CategoryKey>): C
     poi: {
       id: osmId(element),
       name,
+      localName: localised && local && local !== localised ? local : null,
       lat: coords.lat,
       lng: coords.lng,
       tags: category.tags,
@@ -254,6 +291,7 @@ function candidateFromListing(
     poi: {
       id: `wikivoyage/${slugForListing(listing)}`,
       name: listing.name,
+      localName: null,
       lat: listing.lat,
       lng: listing.lng,
       tags: category.tags,
@@ -321,6 +359,7 @@ function mergeCandidates(a: Candidate, b: Candidate): Candidate {
     ...Object.fromEntries(Object.entries(primary.poi.sourceIds).filter(([, v]) => v)),
   };
   primary.poi.priceTier = primary.poi.priceTier ?? secondary.poi.priceTier;
+  primary.poi.localName = primary.poi.localName ?? secondary.poi.localName;
   primary.poi.typicalDurationMin = Math.max(
     primary.poi.typicalDurationMin,
     secondary.poi.typicalDurationMin,

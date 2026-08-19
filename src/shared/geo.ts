@@ -9,6 +9,13 @@ export type GeocodeResult = {
   lng: number;
   /** ISO 3166-1 alpha-2, used to resolve public-holiday opening rules (§7c). */
   countryCode: string | null;
+  /**
+   * The place's English exonym when the geocoder knows one. Nominatim answers
+   * "Kyoto" with `京都市`, and English Wikivoyage has no article under that
+   * title — so without this the entire editorial signal (§5a) is lost for any
+   * city whose local name is not its English one.
+   */
+  englishName: string | null;
 };
 
 const EARTH_RADIUS_M = 6_371_000;

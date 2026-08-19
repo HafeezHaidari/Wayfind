@@ -28,6 +28,12 @@ export type CityStay = {
    * "Tu-Su 10:00-18:00; PH off" reads as closed and vanishes from the plan.
    */
   countryCode?: string | null;
+  /**
+   * The city's English name, when it differs from `cityName`. Wikivoyage
+   * articles are titled in English, so a city geocoded as 京都市 needs "Kyoto"
+   * to find its guide at all (§5a).
+   */
+  englishName?: string | null;
 };
 
 export type Preferences = {
@@ -67,7 +73,16 @@ export type InterestTag =
 
 export type Poi = {
   id: string;
+  /** Display name. OSM's `name:en` when there is one, otherwise `name`. */
   name: string;
+  /**
+   * The name in the local script, when it differs from the display name.
+   * 3,069 of 3,353 candidates in Tokyo carry a Japanese `name` — an itinerary
+   * that shows only those is unreadable to the traveller who asked for it, and
+   * one that shows only the English is useless for pointing at a street sign or
+   * showing a taxi driver. So both are kept.
+   */
+  localName: string | null;
   lat: number;
   lng: number;
   tags: InterestTag[];

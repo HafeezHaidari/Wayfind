@@ -108,7 +108,8 @@ async function planCity(input: {
   if (sourced.candidates.length === 0) {
     // §9g: say what went wrong and what to do about it.
     throw new Error(
-      `No places found for these interests in ${city.cityName} — try widening your interests, ` +
+      `No places found for these interests in ${city.englishName ?? city.cityName} — ` +
+        `try widening your interests, ` +
         `or check the city name is right.`,
     );
   }

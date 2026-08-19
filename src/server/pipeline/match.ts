@@ -36,13 +36,18 @@ const STOPWORDS = new Set([
 ]);
 
 export function normaliseName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      // Keep every script's letters and digits, not just Latin: stripping to
+      // [a-z0-9] reduced 迎賓館 to an empty string, so every Japanese name
+      // scored zero against every other and matching silently stopped working.
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 export function significantTokens(name: string): string[] {

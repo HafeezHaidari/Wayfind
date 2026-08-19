@@ -18,7 +18,7 @@ complete and correct, and each item only unlocks the capability named next to it
 | Missing | What it would change | What happens without it |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | The three LLM jobs of §6b: reading the free-text interview box, semantic matching ("somewhere atmospheric for a last dinner"), and writing the per-stop rationale. | The free-text box is read by a deterministic keyword parser instead — cruder, and it says so in the itinerary notes. Semantic matching is skipped and the scorer's own order stands. Rationales fall back to a deterministic line naming which of your interests the place matched. **This path has never run against a live model.** The id-validation, the JSON schemas and every fallback are exercised by the test suite, but the three call sites are unproven end to end. |
-| A live test city | Which cities are known to work against live data. | Three have been validated against live services: **Porto** and **Lisbon** (also recorded into `fixtures/`), and **Ghent** (live only, as a check that a city with no fixture works — 2 days, 9 stops, 16s cold). Any other city will be queried live and should work, but has not been checked. |
+| A live test city | Which cities are known to work against live data. | Six have been validated against live services: **Porto** and **Lisbon** (also recorded into `fixtures/`), **Ghent**, and **Tokyo, Kyoto and Osaka** (a nine-day three-city trip, which is what shook out the rate-limiting, non-Latin-name and dense-city problems described under [Known limitations](#known-limitations)). Any other city will be queried live and should work, but has not been checked. |
 | `GOOGLE_PLACES_API_KEY` | Ratings and popularity as a quality signal. | Deliberately unused — see [Why not Google Places](#why-not-google-places). |
 
 ---
@@ -86,9 +86,19 @@ A Wikivoyage listing matched to an OSM object is the strongest kind of candidate
 endorsement *and* structured hours. Matching is by shared Wikidata id where there is one,
 otherwise name similarity plus proximity (`src/server/pipeline/match.ts`).
 
+Large cities need one extra step. English Wikivoyage splits them across district
+sub-articles — Tokyo's own page holds 97 listings and every one is an embassy, while its
+39 `Tokyo/…` district pages hold the museums and temples. When a parent article comes back
+thin, Wayfind follows up to eight of its district links, in the order the editors listed
+them, which is the order that puts the central districts first.
+
 One Overpass query per city per generation, with all categories batched into it and a
 per-category result limit. Refinements never re-source: they reschedule against a
 process-lifetime cache holding third-party POI records only (`src/server/pipeline/cache.ts`).
+
+Outbound calls are gated on the server (`src/server/pipeline/limiter.ts`): one Overpass
+query at a time — half the two-per-IP allowance the public instance publishes — and Wayfind
+reads `/api/status` to see whether a slot is free before asking for one.
 
 ### How they are scored
 
@@ -165,11 +175,37 @@ are dropped and the resulting hours are flagged unverified.
 an OSM object. A thinner article means the ranking leans harder on OpenStreetMap, which is
 worse at knowing what is worth seeing — the itinerary says so in its notes when that
 happens. Cities with no Wikivoyage article at all are ranked on OSM alone, and it says that
-too.
+too. For big cities the district-article step above usually recovers the signal, but it
+reads eight districts at most, so an outlying neighbourhood can still be missed.
+
+**The map-data service does go down.** During development `overpass-api.de` spent about an
+hour returning `504 — the server is probably too busy` for *every* query, including a
+200-metre single-selector probe, while reporting free slots. That is the backend, not the
+rate limiter, and no amount of politeness on the client side fixes it. Wayfind falls back
+across free, keyless Overpass mirrors (`OVERPASS_FALLBACK_URLS`) and rests an unresponsive
+host for five minutes. Mirrors can lag the main database by weeks, so a fallback may serve
+slightly stale opening hours. If everything is down you get a message saying so rather than
+a broken itinerary.
+
+**Dense cities are slower.** A three-city Japanese trip takes around three minutes from
+cold, against about sixteen seconds for a single European city. Most of that is Overpass
+scanning a dense area and the extra district-article reads. Refinements afterwards are
+fast, because they never re-source.
+
+**Opening-hours coverage is worse in some countries than others.** Porto's top candidates
+carry `opening_hours` about a third of the time; Tokyo's far less. Wayfind schedules
+unknown-hours places anyway and marks every one of them, so a Japanese itinerary carries
+noticeably more "hours unconfirmed" labels than a Portuguese one. That is the data, not a
+judgement about the place.
 
 **Cross-language name matching is imperfect.** Wikivoyage's "City Hall" and OSM's "Câmara
 Municipal do Porto" only match if one of them carries a Wikidata id. Unmatched listings
 still become candidates — they just arrive without structured opening hours.
+
+**Names outside the Latin alphabet.** Where OpenStreetMap has a `name:en` tag, that is what
+the itinerary shows, with the local-script name beside it — the English half is what you
+read, the local half is what you point at. Roughly 60% of Tokyo's candidates have both. A
+place with no `name:en` appears in its own script only.
 
 **No live occupancy, prices, or bookings.** Nothing here checks whether a museum is sold
 out, what a ticket costs today, or whether a restaurant has a table. That is out of scope.

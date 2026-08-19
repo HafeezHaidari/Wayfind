@@ -1,8 +1,10 @@
 import type { Category } from "../../shared/categories.js";
 import { bboxAround, type LatLng } from "../../shared/geo.js";
-import { env } from "../env.js";
+import { env, USER_AGENT } from "../env.js";
 import { fetchJson } from "./http.js";
 import type { Counters } from "./counters.js";
+import { info } from "../log.js";
+import { overpassLimiter } from "./limiter.js";
 
 /**
  * §5a — OpenStreetMap via Overpass: free, keyless, global, and the only free
@@ -25,10 +27,18 @@ export type OverpassElement = {
 
 export type OverpassResponse = { elements: OverpassElement[]; remark?: string };
 
-/** Half-width of the box searched around the city centre, per category group. */
-const SIGHT_RADIUS_M = 6000;
-/** Food is dense and local; a smaller box keeps the response honest in size. */
-const FOOD_RADIUS_M = 3500;
+/**
+ * Half-width of the box searched around the city centre.
+ *
+ * 4 km is not a performance hack dressed up as a product decision: the daily
+ * walking caps in §7d top out at 12 km *in total*, so a place 6 km from the
+ * centre was never going to be scheduled anyway. Shrinking the box more than
+ * halves the area Overpass has to scan, which in Tokyo is the difference
+ * between a usable query and one that exceeds three minutes.
+ */
+const SIGHT_RADIUS_M = 4000;
+/** Food is denser still, and meals sit between central stops. */
+const FOOD_RADIUS_M = 2000;
 
 const FOOD_CATEGORIES = new Set(["restaurant", "cafe", "bar"]);
 
@@ -67,7 +77,7 @@ export function buildQuery(centre: LatLng, categories: Category[]): string {
     const selectors = category.overpass
       // `[name]` alone removes most of the untagged noise: an unnamed bench-like
       // node is never somewhere to schedule a visit to.
-      .map((selector) => `nwr${selector}[name]${box ? `(${box})` : ""};`)
+      .map((selector) => `${category.elements}${selector}[name]${box ? `(${box})` : ""};`)
       .join(" ");
     lines.push(`(${selectors})->.${set};`);
     outs.push(`.${set} out center tags ${category.fetchLimit};`);
@@ -82,6 +92,69 @@ function boxLiteral(centre: LatLng, radiusM: number): string {
   return [box.south, box.west, box.north, box.east].map((v) => v.toFixed(4)).join(",");
 }
 
+/**
+ * §10 — "Overpass is a free shared service. Respect it."
+ *
+ * Overpass publishes its own rate-limit state at `/api/status`, including the
+ * exact moment your next slot frees up:
+ *
+ *   Rate limit: 2
+ *   1 slots available now.
+ *   Slot available after: 2026-08-18T08:50:44Z, in 2 seconds.
+ *
+ * Measured, the limit is not about query cost — a heavy Tokyo query succeeded
+ * in 20s and a lighter Kyoto one seconds later was refused outright. Firing and
+ * hoping produces a 504, and the retry then burns another slot. So ask first
+ * and wait the stated time. The status endpoint itself does not consume a slot.
+ *
+ * Fails soft: if the status cannot be read or parsed, the query goes ahead.
+ */
+async function waitForSlot(endpoint: string): Promise<void> {
+  const statusUrl = endpoint.replace(/\/interpreter\/?$/, "/status");
+  if (statusUrl === endpoint) return; // a self-hosted URL we don't recognise
+
+  let report: string;
+  try {
+    const res = await fetch(statusUrl, {
+      headers: { "User-Agent": USER_AGENT },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return;
+    report = await res.text();
+  } catch {
+    return;
+  }
+
+  const available = Number(report.match(/(\d+)\s+slots? available now/)?.[1] ?? "1");
+  if (available > 0) return;
+
+  const seconds = Number(report.match(/in\s+(\d+)\s+seconds?/)?.[1] ?? "0");
+  const wait = Math.min(Math.max(seconds, 1) + 1, MAX_SLOT_WAIT_S);
+  info(`Overpass has no free slot; waiting ${wait}s for one`);
+  await new Promise((resolve) => setTimeout(resolve, wait * 1000));
+}
+
+/** Beyond this we stop waiting and let the request fail with a clear message. */
+const MAX_SLOT_WAIT_S = 90;
+
+/**
+ * Remember which endpoints are sick, so a multi-city trip pays the cost of a
+ * dead host once rather than once per city. Without this, three cities meant
+ * three separate waits on the same unresponsive primary and a nine-day trip
+ * took over ten minutes.
+ */
+const unhealthyUntil = new Map<string, number>();
+const UNHEALTHY_FOR_MS = 5 * 60_000;
+
+/** Healthy endpoints first, recently-failed ones last but never excluded. */
+function orderedEndpoints(): string[] {
+  const all = [env.overpassUrl, ...env.overpassFallbackUrls];
+  const now = Date.now();
+  const healthy = all.filter((url) => (unhealthyUntil.get(url) ?? 0) <= now);
+  const resting = all.filter((url) => (unhealthyUntil.get(url) ?? 0) > now);
+  return [...healthy, ...resting];
+}
+
 export async function queryOverpass(
   centre: LatLng,
   categories: Category[],
@@ -90,19 +163,53 @@ export async function queryOverpass(
   const query = buildQuery(centre, categories);
   counters.overpassQueries += 1;
   const body = new URLSearchParams({ data: query });
-  const response = await fetchJson<OverpassResponse>(env.overpassUrl, {
-    body,
-    label: "Overpass",
-    timeoutMs: 200_000,
-  });
+  // §10 — never more than one in flight, whatever the caller is doing, and
+  // never before Overpass says it has a slot for us.
+  const endpoints = orderedEndpoints();
+  let lastError: unknown = null;
 
-  // Overpass reports a server-side timeout as HTTP 200 with an empty element
-  // list and a `remark`. Treating that as "no places here" would be exactly the
-  // empty success §11c forbids, so it fails loudly instead.
-  if (response.remark && /error|timed out|timeout/i.test(response.remark)) {
-    throw new Error(`Overpass couldn't complete the query: ${response.remark}`);
+  return overpassLimiter.run(async () => {
+    for (const [index, endpoint] of endpoints.entries()) {
+      try {
+        await waitForSlot(endpoint);
+        const response = await fetchJson<OverpassResponse>(endpoint, {
+          body,
+          label: "Overpass",
+          timeoutMs: 200_000,
+          // With somewhere else to go, move on rather than hammering a sick host.
+          retries: index === endpoints.length - 1 ? 2 : 1,
+        });
+
+        // Overpass reports a server-side timeout as HTTP 200 with an empty
+        // element list and a `remark`. Treating that as "no places here" would
+        // be exactly the empty success §11c forbids, so it fails loudly.
+        if (response.remark && /error|timed out|timeout/i.test(response.remark)) {
+          throw new Error(`Overpass couldn't complete the query: ${response.remark}`);
+        }
+        unhealthyUntil.delete(endpoint);
+        if (index > 0) info(`Overpass: served by ${hostOf(endpoint)}`);
+        return response;
+      } catch (err) {
+        lastError = err;
+        unhealthyUntil.set(endpoint, Date.now() + UNHEALTHY_FOR_MS);
+        if (index < endpoints.length - 1) {
+          info(
+            `Overpass: ${hostOf(endpoint)} is not answering — trying ` +
+              `${hostOf(endpoints[index + 1])}, and resting it for 5 minutes`,
+          );
+        }
+      }
+    }
+    throw lastError ?? new Error("Overpass is unavailable");
+  });
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
   }
-  return response;
 }
 
 /** Nodes carry coordinates directly; ways and relations carry a computed centre. */

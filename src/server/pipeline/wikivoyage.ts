@@ -1,5 +1,7 @@
 import { fetchJson } from "./http.js";
+import { info } from "../log.js";
 import type { Counters } from "./counters.js";
+import { wikiLimiter } from "./limiter.js";
 import { env } from "../env.js";
 import { readFixtureText } from "./fixtures.js";
 import { fixtureSlug } from "./fixtures.js";
@@ -33,6 +35,8 @@ export type WikivoyageListing = {
   content: string;
   /** Position in the article. Earlier listings are more prominent (§6a). */
   order: number;
+  /** How many listings that article had, so prominence stays per-article (§6a). */
+  articleTotal: number;
 };
 
 const LISTING_TEMPLATES = new Set([
@@ -46,36 +50,62 @@ const LISTING_TEMPLATES = new Set([
   "vcard",
 ]);
 
+/**
+ * Fetch a city's article, trying each title in turn.
+ *
+ * English Wikivoyage titles its articles in English, while the geocoder answers
+ * with the local name: 京都市 returns `missingtitle`, Kyoto returns a 62 KB
+ * guide. So callers pass the English exonym first and the local name as a
+ * fallback, and a miss on one is not a failure.
+ */
 export async function fetchWikivoyageArticle(
-  cityName: string,
+  titles: string | string[],
   counters: Counters,
 ): Promise<string | null> {
+  const candidates = (Array.isArray(titles) ? titles : [titles])
+    .map((t) => t?.trim())
+    .filter((t): t is string => Boolean(t));
+  const tried = new Set<string>();
+
   if (env.fixtureMode) {
     counters.wikivoyageFetches += 1;
-    try {
-      return readFixtureText(fixtureSlug(cityName), "wikivoyage.wikitext");
-    } catch {
-      return null;
+    for (const title of candidates) {
+      try {
+        return readFixtureText(fixtureSlug(title), "wikivoyage.wikitext");
+      } catch {
+        continue;
+      }
     }
+    return null;
   }
 
-  const url =
-    "https://en.wikivoyage.org/w/api.php?" +
-    new URLSearchParams({
-      action: "parse",
-      page: cityName,
-      prop: "wikitext",
-      format: "json",
-      formatversion: "2",
-      redirects: "1",
-    }).toString();
+  for (const title of candidates) {
+    if (tried.has(title.toLowerCase())) continue;
+    tried.add(title.toLowerCase());
 
-  counters.wikivoyageFetches += 1;
-  const body = await fetchJson<{ parse?: { wikitext?: string }; error?: unknown }>(url, {
-    label: "Wikivoyage",
-    timeoutMs: 30_000,
-  });
-  return body.parse?.wikitext ?? null;
+    const url =
+      "https://en.wikivoyage.org/w/api.php?" +
+      new URLSearchParams({
+        action: "parse",
+        page: title,
+        prop: "wikitext",
+        format: "json",
+        formatversion: "2",
+        redirects: "1",
+      }).toString();
+
+    counters.wikivoyageFetches += 1;
+    const body = await wikiLimiter.run(() =>
+      fetchJson<{ parse?: { wikitext?: string }; error?: { code?: string } }>(url, {
+        label: "Wikivoyage",
+        timeoutMs: 30_000,
+      }),
+    );
+    const wikitext = body.parse?.wikitext;
+    if (wikitext) return wikitext;
+    info(`Wikivoyage has no article titled "${title}"${body.error?.code ? ` (${body.error.code})` : ""}`);
+  }
+  return null;
 }
 
 /**
@@ -121,7 +151,44 @@ export function parseListings(wikitext: string): WikivoyageListing[] {
     i = block.end - 1;
   }
 
+  for (const listing of out) listing.articleTotal = out.length;
   return out;
+}
+
+/**
+ * §5a's editorial signal goes missing for exactly the biggest cities.
+ *
+ * English Wikivoyage splits a large city across district sub-articles — Tokyo's
+ * own page carries 97 listings and every one of them is an embassy under
+ * "Cope", while its 39 `Tokyo/…` district pages hold the museums and temples.
+ * Parsing only the parent leaves Tokyo and Osaka ranked on OpenStreetMap alone.
+ *
+ * So when a parent article is thin, follow its district links. They appear in
+ * article order, which is editorial order, so the first few are the central
+ * districts a visitor actually wants.
+ */
+export async function fetchDistrictArticles(
+  parentTitle: string,
+  parentWikitext: string,
+  counters: Counters,
+  limit: number,
+): Promise<string[]> {
+  if (env.fixtureMode) return [];
+
+  const prefix = `${parentTitle.toLowerCase()}/`;
+  const links = [...parentWikitext.matchAll(/\[\[([^\]|#]+\/[^\]|#]+)(?:\|[^\]]*)?\]\]/g)]
+    .map((m) => m[1].trim())
+    .filter((link) => link.toLowerCase().startsWith(prefix));
+  const districts = [...new Set(links)].slice(0, limit);
+  if (districts.length === 0) return [];
+
+  info(`Wikivoyage: ${parentTitle} is a district article; reading ${districts.length} of its districts`);
+  // Issued together and throttled by the shared Wikimedia gate rather than
+  // one-at-a-time: eight sequential round trips per city dominated the run.
+  const fetched = await Promise.all(
+    districts.map((district) => fetchWikivoyageArticle(district, counters).catch(() => null)),
+  );
+  return fetched.filter((wikitext): wikitext is string => wikitext !== null);
 }
 
 // --- template reading --------------------------------------------------------
@@ -216,6 +283,7 @@ function toListing(
     price: p.price ? cleanWikitext(p.price) || null : null,
     content: cleanWikitext(p.content ?? ""),
     order,
+    articleTotal: 0, // set by parseListings once the article is fully read
   };
 }
 
@@ -252,7 +320,17 @@ export function cleanWikitext(value: string): string {
     .trim();
 }
 
-/** Listings worth treating as candidates: places you go, not places you sleep. */
+/**
+ * §5a names the sections worth parsing: "See", "Do", "Eat", "Drink". Being
+ * more permissive than that pulled Tokyo's embassies into the itinerary as
+ * monuments, because they are listed under "Cope" and an unrecognised section
+ * fell through to a generic default. A section allowlist is both closer to the
+ * brief and the fix.
+ */
+const VISITOR_SECTIONS = new Set(["see", "do", "eat", "drink", "buy"]);
+
 export function isVisitable(listing: WikivoyageListing): boolean {
-  return listing.kind !== "sleep" && listing.name.length > 1;
+  if (listing.name.length <= 1) return false;
+  if (listing.kind === "sleep" || listing.kind === "other") return false;
+  return VISITOR_SECTIONS.has(listing.section.trim().toLowerCase());
 }

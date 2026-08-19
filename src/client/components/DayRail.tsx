@@ -135,6 +135,8 @@ function StopBlock({
       <div className="rail-block__body">
         <div className="rail-block__head">
           <h3 className="rail-block__name place-name">{poi.name}</h3>
+          {/* The name as it appears on the door, for pointing at (§9g). */}
+          {poi.localName && <span className="rail-block__local">{poi.localName}</span>}
           {stop.pinned && <span className="tag tag--locked">Pinned</span>}
         </div>
 
@@ -215,6 +217,7 @@ function MealBlock({ block }: { block: Extract<RailBlock, { kind: "meal" }> }) {
       <div className="rail-block__body">
         <h3 className="rail-block__name place-name">
           {block.poi ? block.poi.name : label}
+          {block.poi?.localName && <span className="rail-block__local">{block.poi.localName}</span>}
         </h3>
         <p className="rail-block__meta">
           {block.poi ? `${label} · a table you'll want to book` : `${label} · time held, pick as you go`}

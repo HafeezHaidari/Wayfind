@@ -1,5 +1,6 @@
 import { fetchJson } from "./http.js";
 import type { Counters } from "./counters.js";
+import { wikiLimiter } from "./limiter.js";
 import { env } from "../env.js";
 import { readFixture, fixtureSlug } from "./fixtures.js";
 
@@ -44,9 +45,12 @@ export async function fetchSitelinkCounts(
       }).toString();
 
     counters.wikidataFetches += 1;
-    const body = await fetchJson<{
-      entities?: Record<string, { sitelinks?: Record<string, unknown> }>;
-    }>(url, { label: "Wikidata", timeoutMs: 30_000 });
+    const body = await wikiLimiter.run(() =>
+      fetchJson<{ entities?: Record<string, { sitelinks?: Record<string, unknown> }> }>(url, {
+        label: "Wikidata",
+        timeoutMs: 30_000,
+      }),
+    );
 
     for (const [id, entity] of Object.entries(body.entities ?? {})) {
       out[id] = Object.keys(entity.sitelinks ?? {}).length;

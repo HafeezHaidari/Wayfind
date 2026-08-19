@@ -16,6 +16,8 @@ export async function geocodeCity(query: string): Promise<GeocodeResult[]> {
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("limit", "5");
   url.searchParams.set("addressdetails", "1");
+  // `name:en` is what makes the Wikivoyage lookup work for non-anglophone cities.
+  url.searchParams.set("namedetails", "1");
 
   const res = await fetch(url, {
     headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
@@ -32,6 +34,7 @@ export async function geocodeCity(query: string): Promise<GeocodeResult[]> {
       lat: Number(r.lat),
       lng: Number(r.lon),
       countryCode: r.address?.country_code?.toLowerCase() ?? null,
+      englishName: englishNameOf(r),
     }));
 }
 
@@ -41,7 +44,15 @@ type NominatimResult = {
   lat: string;
   lon: string;
   address?: Record<string, string>;
+  namedetails?: Record<string, string>;
 };
+
+/** The English exonym, when it differs from the name the geocoder led with. */
+function englishNameOf(r: NominatimResult): string | null {
+  const english = r.namedetails?.["name:en"]?.trim();
+  if (!english) return null;
+  return english === r.name?.trim() ? null : english;
+}
 
 function pickCityName(r: NominatimResult, fallback: string): string {
   return (

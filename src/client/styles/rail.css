@@ -86,6 +86,17 @@
   color: var(--ink-soft);
 }
 
+/*
+ * The local-script name, shown beside the English one. Abroad this is the half
+ * that gets you through the door: it matches the sign and it can be pointed at.
+ */
+.rail-block__local {
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
 /* --- Stops ------------------------------------------------------------------ */
 
 .rail-block--stop {

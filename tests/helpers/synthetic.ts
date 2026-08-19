@@ -22,6 +22,7 @@ export function poi(overrides: Partial<Poi> & { name?: string } = {}): Poi {
   return {
     id: overrides.id ?? `poi-${counter}`,
     name: overrides.name ?? `Place ${counter}`,
+    localName: overrides.localName ?? null,
     lat: overrides.lat ?? PORTO_CENTRE.lat,
     lng: overrides.lng ?? PORTO_CENTRE.lng,
     tags: overrides.tags ?? cat.tags,

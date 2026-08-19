@@ -126,6 +126,7 @@ function renderBlock(
   <div class="rail-block__body">
     <div class="rail-block__head">
       <h3 class="rail-block__name place-name">${escapeHtml(poi.name)}</h3>
+      ${poi.localName ? `<span class="rail-block__local">${escapeHtml(poi.localName)}</span>` : ""}
       ${stop.pinned ? '<span class="tag tag--locked">Pinned</span>' : ""}
     </div>
     <p class="rail-block__why${stop.rationale ? "" : " rail-block__why--plain"}">${escapeHtml(

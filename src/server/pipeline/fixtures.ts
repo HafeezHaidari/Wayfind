@@ -15,6 +15,7 @@ export type CityFixture = {
   city: string;
   centre: { lat: number; lng: number };
   countryCode?: string | null;
+  englishName?: string | null;
   recordedAt: string;
 };
 
@@ -102,6 +103,7 @@ export function fixtureGeocode(query: string): GeocodeResult[] {
       lat: meta.centre.lat,
       lng: meta.centre.lng,
       countryCode: meta.countryCode ?? null,
+      englishName: meta.englishName ?? null,
     },
   ];
 }

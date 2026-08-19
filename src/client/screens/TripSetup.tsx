@@ -124,6 +124,7 @@ function CityCard({
       lat: result.lat,
       lng: result.lng,
       countryCode: result.countryCode,
+      englishName: result.englishName,
     });
   }
 

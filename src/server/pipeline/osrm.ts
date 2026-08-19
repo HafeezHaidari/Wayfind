@@ -3,6 +3,7 @@ import { env } from "../env.js";
 import { fetchJson } from "./http.js";
 import { debug } from "../log.js";
 import type { Counters } from "./counters.js";
+import { osrmLimiter } from "./limiter.js";
 import { key } from "../../core/travel.js";
 import { estimateMinutes } from "../../core/travel.js";
 import { walkingDistanceM } from "../../shared/geo.js";
@@ -53,7 +54,9 @@ export async function buildTravelMatrix(
   const url = `${env.osrmUrl}/table/v1/driving/${coords}?annotations=duration,distance`;
 
   counters.osrmCalls += 1;
-  const body = await fetchJson<OsrmTableResponse>(url, { label: "OSRM", timeoutMs: 60_000 });
+  const body = await osrmLimiter.run(() =>
+    fetchJson<OsrmTableResponse>(url, { label: "OSRM", timeoutMs: 60_000 }),
+  );
   if (body.code !== "Ok" || !body.distances) {
     throw new Error(`OSRM returned ${body.code}${body.message ? `: ${body.message}` : ""}`);
   }

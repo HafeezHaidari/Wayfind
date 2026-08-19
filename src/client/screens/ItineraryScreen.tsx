@@ -79,11 +79,20 @@ export default function ItineraryScreen({
     [onItinerary],
   );
 
-  // Generate once on arrival; refinements are explicit from here on.
+  /**
+   * Generate once on arrival; refinements are explicit from here on.
+   *
+   * The guard is a ref, not the `status` state, because StrictMode mounts this
+   * component twice in development and `setStatus("working")` has not committed
+   * when the second effect runs. Both passes saw `status === "idle"` and fired,
+   * so every trip ran twice — which on a three-city trip held both of Overpass's
+   * two per-IP slots and rate-limited itself into failure.
+   */
+  const hasGenerated = useRef(false);
   useEffect(() => {
-    if (itinerary === null && status === "idle") {
-      void run({ brief, pins, removedPoiIds: removed, reuse: false });
-    }
+    if (hasGenerated.current || itinerary !== null) return;
+    hasGenerated.current = true;
+    void run({ brief, pins, removedPoiIds: removed, reuse: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -48,6 +48,7 @@ async function main() {
     basecampLat: null,
     basecampLng: null,
     countryCode: located.countryCode,
+    englishName: located.englishName,
   };
   await writeFile(
     join(dir, "meta.json"),
@@ -56,6 +57,7 @@ async function main() {
         city: located.cityName,
         centre: { lat: located.lat, lng: located.lng },
         countryCode: located.countryCode,
+        englishName: located.englishName,
         recordedAt: new Date().toISOString(),
       },
       null,
@@ -64,7 +66,10 @@ async function main() {
   );
 
   console.log("[2/6] fetching the Wikivoyage article…");
-  const article = await fetchWikivoyageArticle(located.cityName, counters);
+  const article = await fetchWikivoyageArticle(
+    [located.englishName ?? "", located.cityName],
+    counters,
+  );
   if (!article) throw new Error(`No Wikivoyage article for ${located.cityName}.`);
   await writeFile(join(dir, "wikivoyage.wikitext"), article);
   const listings = parseListings(article).filter(isVisitable);
