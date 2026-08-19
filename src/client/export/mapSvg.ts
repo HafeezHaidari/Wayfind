@@ -54,7 +54,14 @@ export function renderRouteSvg(stops: Poi[], width = 640, height = 360): string 
     )
     .join("");
 
-  return `<svg class="export-map" viewBox="0 0 ${width} ${height}" role="img"
+  // The `width`/`height` attributes are load-bearing, not decoration. An inline
+  // SVG with only a viewBox has no intrinsic size, and WebKit resolves the
+  // `height: auto` in the stylesheet to zero — so the drawing is there in the
+  // DOM, sized 688×0, and invisible in Safari and Quick Look while rendering
+  // correctly in Chrome. Explicit dimensions plus an aspect-ratio in CSS make
+  // it resolve the same way in every engine.
+  return `<svg class="export-map" viewBox="0 0 ${width} ${height}"
+     width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet" role="img"
      aria-label="Route between the day's stops, in order">
   <path d="${path}" class="export-map__route" />
   ${markers}

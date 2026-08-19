@@ -3,6 +3,7 @@ import { formatClock, formatDayLabel, formatDuration } from "../../shared/dates.
 import { CATEGORY_BY_KEY } from "../../shared/categories.js";
 import { buildTimeline, slackMinutes, travelMinutes } from "../model/timeline.js";
 import { plainWhy } from "../model/why.js";
+import { renderMapImage } from "./mapImage.js";
 import { renderRouteSvg } from "./mapSvg.js";
 
 /**
@@ -20,10 +21,10 @@ export async function buildStaticPage(brief: TripBrief, itinerary: Itinerary): P
   const [appCss, fontCss] = await Promise.all([collectStyles(), fetchInlineFonts()]);
   const title = brief.name.trim() || `${itinerary.cities.map((c) => c.cityName).join(" and ")}`;
 
-  const body = itinerary.cities
-    .map((city) =>
-      city.days
-        .map((day) => {
+  const body = (
+    await Promise.all(
+      itinerary.cities.flatMap((city) =>
+        city.days.map(async (day) => {
           const blocks = buildTimeline(day, city.meals[day.dayIndex] ?? [], itinerary.pois, {
             approximateTravel: brief.preferences.transport !== "walk",
           });
@@ -51,7 +52,7 @@ export async function buildStaticPage(brief: TripBrief, itinerary: Itinerary): P
     ${blocks.map((block) => renderBlock(block, brief.preferences)).join("\n")}
   </ol>
 
-  ${stops.length > 1 ? `<figure class="export-map-figure">${renderRouteSvg(stops)}<figcaption>The day's route, in order. Distances are as the crow flies.</figcaption></figure>` : ""}
+  ${await renderDayMap(stops)}
 
   ${
     day.warnings.length > 0
@@ -62,10 +63,10 @@ export async function buildStaticPage(brief: TripBrief, itinerary: Itinerary): P
       : ""
   }
 </section>`;
-        })
-        .join("\n"),
+        }),
+      ),
     )
-    .join("\n");
+  ).join("\n");
 
   return `<!doctype html>
 <html lang="en">
@@ -104,6 +105,26 @@ ${body}
 </footer>
 </body>
 </html>`;
+}
+
+/**
+ * A real basemap where one can be fetched, the line drawing where it cannot.
+ * §9f allows "a static image or omitted"; an image of the actual streets is the
+ * only version that answers "which way do I walk from here".
+ */
+async function renderDayMap(stops: Poi[]): Promise<string> {
+  if (stops.length === 0) return "";
+
+  const image = await renderMapImage(stops).catch(() => null);
+  if (image) {
+    return `<figure class="export-map-figure">
+  <img class="export-map-img" src="${image.dataUri}" alt="Map of the day's route, stops numbered in order" />
+  <figcaption>The day's route, stops numbered in order. Map data ${escapeHtml(image.attribution)}.</figcaption>
+</figure>`;
+  }
+
+  if (stops.length < 2) return "";
+  return `<figure class="export-map-figure">${renderRouteSvg(stops)}<figcaption>The day's route, in order. Map tiles couldn't be fetched, so this is a schematic — distances are as the crow flies.</figcaption></figure>`;
 }
 
 function renderBlock(
@@ -239,9 +260,20 @@ body.export {
 .export-day { margin-bottom: 3.5rem; }
 .export-coords { font-size: 0.75rem; color: var(--rail); margin-top: 0.25rem; }
 .export-map-figure { margin: 1.5rem 0 0; }
-.export-map {
+.export-map-img {
+  display: block;
   width: 100%;
   height: auto;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 2px;
+}
+.export-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Belt and braces with the width/height attributes: without this WebKit
+     collapses the drawing to zero height. */
+  aspect-ratio: 640 / 360;
   border: 1px solid var(--hairline-strong);
   border-radius: 2px;
   background: var(--paper-sunk);

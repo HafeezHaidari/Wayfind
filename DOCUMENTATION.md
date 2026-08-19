@@ -8,7 +8,8 @@ live-data run (Tokyo + Kyoto + Osaka, 9 days).
 **Verified working:** The whole flow, end to end, live and from fixtures. 111 tests pass
 (`npx vitest run`), `npx tsc --noEmit` clean, `npm run build` succeeds. Browser checks still pass:
 rail at exactly 3.40 px/min (120 min renders 4.00× a 30 min stop), the export renders with every
-outbound request aborted, print gives one day per page. The Japan trip that previously failed
+outbound request aborted — now checked in WebKit as well as Chromium — and print gives one day per
+page. The exported page carries a real OpenStreetMap basemap per day, embedded as an image. The Japan trip that previously failed
 outright now completes in about 3 minutes cold and produces the canonical landmarks for all three
 cities — Nijō Castle, Heian Shrine and Kyoto Imperial Palace; Osaka Castle, Kaiyukan and Tsūtenkaku;
 Tokyo Tower, Tsukiji Outer Market and Yasukuni Shrine — with no coverage-degradation warnings.
@@ -26,7 +27,7 @@ is the §12 report: a required free service was unavailable, and no paid provide
 `category` and `localName`; `CityStay` carries `countryCode` and `englishName`; a stop pinned to a
 time may sit outside the POI's hours (§7c vs §8); long slack gaps are height-capped while stops and
 meals stay exactly proportional.
-**Last updated:** After fixing the failures found by the first live three-city trip.
+**Last updated:** After replacing the exported schematic with a real embedded basemap.
 
 ---
 
@@ -342,3 +343,30 @@ normalised to an empty string and name matching silently scored zero against eve
 `\p{L}\p{N}`, so local-script names can match each other too.
 **Rejected:** Showing only the local name, or only the English one — each is useless in the
 situation the other covers.
+
+### The exported "map" was four dots on an empty field
+**Context:** Reported after a real export: "the maps are not visible". They were rendering — the
+verification measured one 688px wide and passed — but the check only ever asserted *width*, and the
+drawing itself was a dashed line between numbered circles on blank grey. No streets, no river, no
+orientation. It did not read as a map, which is indistinguishable from not being there.
+**Decision:** Two things. The export now fetches OpenStreetMap tiles for each day's bounding box at
+export time, composes them on a canvas with the route drawn over, and embeds the result as a single
+data URI — §9f's "static image", and the version that answers "which way do I walk from here". The
+tile server sends `access-control-allow-origin: *`, so the canvas stays untainted and the page still
+needs no network to display. Zoom is chosen so a day fits in at most twelve tiles, requests go three
+at a time, and attribution is rendered into the caption. When tiles cannot be fetched the old
+schematic remains as a fallback and its caption says why.
+**Rejected:** Leaving it schematic and explaining it — the complaint was correct. A tile-server proxy
+or a paid static-map API — unnecessary and, for the latter, ruled out by §0b.
+
+### The verification measured width but not height
+**Context:** The map check asserted `svgWidth > 200`. A zero-height element still reports its full
+width, so the check could not have caught the class of bug it existed to catch, and my first
+hypothesis about the report — that WebKit was collapsing a viewBox-only SVG to zero height — was
+plausible enough that I nearly shipped a fix for it. Measuring both dimensions in both engines
+disproved it in about a minute.
+**Decision:** Assert width *and* height, and run the whole export pass a second time in WebKit,
+since Safari is the engine most likely to differ and the one a Mac user opening a downloaded file
+will actually use. Both now pass at 688×668.
+**Rejected:** Trusting the hypothesis and fixing the SVG sizing without reproducing — it would have
+left the real problem untouched while looking like a fix.

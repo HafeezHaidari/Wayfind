@@ -258,7 +258,7 @@ real browser, not by reading the CSS:
 | Daily walking respects the mobility setting | `tests/scheduler.test.ts` |
 | `FIXTURE_MODE=true npm test` passes with no keys and no network | Run with every endpoint pointed at a dead port: 111 passing |
 | Rail block heights are proportional to duration | `npm run preview` — measured at 3.40 px/min on every block; 120 min renders 4.00× the height of 30 min |
-| The exported page renders with the network disabled | `npm run verify:export` — 0 outbound requests attempted, fonts loaded, route drawn, no overflow |
+| The exported page renders with the network disabled | `npm run verify:export` — 0 outbound requests attempted, fonts loaded, map embedded and measured non-zero in both dimensions, no overflow. Run in Chromium **and** WebKit, since Safari is where a zero-height map would show up |
 | Printing produces one readable day per page | `npm run verify:export` — chrome hidden, times at 20px, 8 pages for a 3-day trip |
 | Unknown-hours stops are visibly marked and named | `tests/pipeline-fixture.test.ts` |
 

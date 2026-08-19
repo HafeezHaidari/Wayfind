@@ -13,7 +13,7 @@
  */
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { chromium, type Browser } from "playwright";
+import { chromium, webkit, type Browser, type BrowserType } from "playwright";
 
 const url = argValue("--url") ?? "http://localhost:5173";
 const outDir = argValue("--out") ?? "screens";
@@ -41,6 +41,18 @@ async function main() {
   await verifyPrint(browser, exportPath);
 
   await browser.close();
+
+  /*
+   * And again in WebKit. An inline SVG with only a viewBox has no intrinsic
+   * size, and WebKit resolved the stylesheet's `height: auto` to zero — the
+   * route drawing was present, 688px wide, 0px tall, and invisible in Safari
+   * and Quick Look. Chromium rendered it correctly, so a Chromium-only check
+   * passed while the export was broken for anyone on a Mac.
+   */
+  console.log("\n§9f — the same page in WebKit (Safari's engine):");
+  const safari = await webkit.launch();
+  await verifyOffline(safari, exportPath, "webkit");
+  await safari.close();
   console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
   process.exit(failures === 0 ? 0 : 1);
 }
@@ -73,18 +85,28 @@ async function captureExport(browser: Browser): Promise<string> {
   return path;
 }
 
-async function verifyOffline(browser: Browser, exportPath: string) {
-  const context = await browser.newContext({ viewport: { width: 1100, height: 1400 }, offline: true });
+async function verifyOffline(browser: Browser, exportPath: string, engine = "chromium") {
+  // WebKit errors out on a file:// navigation with request interception active,
+  // so the network-blocking half runs in Chromium only. That is no loss: this
+  // second pass exists to check how the page *renders* in Safari's engine, and
+  // the page has no network dependency left to re-prove.
+  const intercept = engine === "chromium";
+  const context = await browser.newContext({
+    viewport: { width: 1100, height: 1400 },
+    offline: intercept,
+  });
   const page = await context.newPage();
 
-  // Belt and braces: refuse every request that is not the file itself.
   const attempted: string[] = [];
-  await page.route("**/*", (route) => {
-    const target = route.request().url();
-    if (target.startsWith("file://")) return route.continue();
-    attempted.push(target);
-    return route.abort();
-  });
+  if (intercept) {
+    // Belt and braces: refuse every request that is not the file itself.
+    await page.route("**/*", (route) => {
+      const target = route.request().url();
+      if (target.startsWith("file://")) return route.continue();
+      attempted.push(target);
+      return route.abort();
+    });
+  }
 
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(err.message));
@@ -92,7 +114,9 @@ async function verifyOffline(browser: Browser, exportPath: string) {
   await page.goto(`file://${join(process.cwd(), exportPath)}`, { waitUntil: "load" });
   await page.waitForTimeout(1200);
 
-  check("no outbound requests attempted", attempted.length === 0, attempted.slice(0, 3).join(", "));
+  if (intercept) {
+    check("no outbound requests attempted", attempted.length === 0, attempted.slice(0, 3).join(", "));
+  }
   check("no page errors", errors.length === 0, errors.slice(0, 2).join(" | "));
 
   const measured = (await page.evaluate(`(() => {
@@ -106,10 +130,18 @@ async function verifyOffline(browser: Browser, exportPath: string) {
     return {
       stops: railBlocks.length,
       heights,
-      svgs: document.querySelectorAll("svg.export-map").length,
-      svgWidth: document.querySelector("svg.export-map")
-        ? document.querySelector("svg.export-map").getBoundingClientRect().width
+      svgs: document.querySelectorAll(".export-map-figure img, .export-map-figure svg").length,
+      mapKind: document.querySelector(".export-map-img") ? "tiles" : "schematic",
+      svgWidth: document.querySelector(".export-map-figure img, .export-map-figure svg")
+        ? document.querySelector(".export-map-figure img, .export-map-figure svg").getBoundingClientRect().width
         : 0,
+      svgHeight: document.querySelector(".export-map-figure img, .export-map-figure svg")
+        ? document.querySelector(".export-map-figure img, .export-map-figure svg").getBoundingClientRect().height
+        : 0,
+      mapSrcIsInline: (() => {
+        const img = document.querySelector(".export-map-img");
+        return img ? img.getAttribute("src").startsWith("data:") : true;
+      })(),
       warnings: document.querySelectorAll(".day-warnings").length,
       cautionLabels: document.querySelectorAll(".rail-block__caution").length,
       placeFont: nameEl ? getComputedStyle(nameEl).fontFamily : "",
@@ -125,7 +157,10 @@ async function verifyOffline(browser: Browser, exportPath: string) {
     stops: number;
     heights: { minutes: number; height: number }[];
     svgs: number;
+    mapKind: string;
     svgWidth: number;
+    svgHeight: number;
+    mapSrcIsInline: boolean;
     warnings: number;
     cautionLabels: number;
     placeFont: string;
@@ -143,8 +178,15 @@ async function verifyOffline(browser: Browser, exportPath: string) {
     measured.cautionLabels > 0,
     `${measured.cautionLabels} label(s)`,
   );
-  check("route drawing present, not a blank region", measured.svgs > 0 && measured.svgWidth > 200,
-    `${measured.svgs} svg, ${Math.round(measured.svgWidth)}px wide`);
+  // Width alone is not enough: a zero-height SVG is still "present" and still
+  // reports its full width. That is exactly how this shipped broken once.
+  check(
+    "day map present, not a blank region",
+    measured.svgs > 0 && measured.svgWidth > 200 && measured.svgHeight > 100,
+    `${measured.svgs} map(s), ${measured.mapKind}, ` +
+      `${Math.round(measured.svgWidth)}×${Math.round(measured.svgHeight)}px`,
+  );
+  check("day map is embedded, not linked", measured.mapSrcIsInline);
   check("no horizontal overflow", measured.overflowX === 0, `${measured.overflowX}px`);
   check("page has real content height", measured.docHeight > 800, `${measured.docHeight}px`);
 
@@ -167,7 +209,7 @@ async function verifyOffline(browser: Browser, exportPath: string) {
     ratios.map((r) => r.toFixed(2)).join(", "),
   );
 
-  await page.screenshot({ path: `${outDir}/7-export-offline.png`, fullPage: true });
+  await page.screenshot({ path: `${outDir}/7-export-offline-${engine}.png`, fullPage: true });
   await context.close();
 }
 
